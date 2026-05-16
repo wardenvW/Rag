@@ -1,0 +1,113 @@
+from qdrant_client import QdrantClient
+from qdrant_client.models import VectorParams, Distance, PointStruct, OptimizersConfig
+from typing import List
+from dataclasses import dataclass
+import json
+from pipeline import Chunk
+import os
+
+
+path = os.path.abspath("./vector_bd")
+
+@dataclass
+class ChunkMetaData:
+    source: str
+    author: str
+    page: int
+
+
+class SearchResult:
+    def __init__(self, meta: List[ChunkMetaData], chunks_text: List[str]) -> None:
+        self.meta: List[ChunkMetaData] = meta
+        self.text: List[str] =  chunks_text
+
+    def __repr__(self) -> str:
+        res = []
+        for meta, text in zip(self.meta, self.text):
+            res.append({
+                "source": meta.source,
+                "author": meta.author,
+                "page": meta.page,
+                "text": text[:100]
+            })
+        return json.dumps(res, ensure_ascii=False, indent=2)
+
+
+class VectorStorage:
+    def __init__(self, path: str = path, collection_name: str = "docs", dim: int = 1024) -> None:
+        self.client: QdrantClient = QdrantClient(path=path)
+        self.collection = collection_name
+        if not self.client.collection_exists(self.collection):
+            self.client.create_collection(
+                collection_name=self.collection,
+                vectors_config = VectorParams(size=dim, distance=Distance.COSINE),
+                on_disk_payload=True,
+                #optimizers_config=OptimizersConfig(
+                #    deleted_threshold=0.2,
+                #    vacuum_min_vector_number=1,
+                #    default_segment_number=0,
+                #    flush_interval_sec=5,
+                #    max_optimization_threads=1,
+                #    memmap_threshold=None,
+                #    indexing_threshold=20000,
+                #    prevent_unoptimized=None
+                #)
+            )
+
+    def upsert(self, chunks: List[Chunk]) -> None:
+            points = [
+            PointStruct(
+                id=chunk.id,
+                vector=chunk.vector.tolist(),
+                payload={
+                    **chunk.payload,
+                    "text": chunk.text
+                }
+            )
+            for chunk in chunks
+            ]
+        
+            print("Upserting points count:", len(points))
+            if len(points) > 0:
+                print("Example point id/vector_len/payload_keys:",
+                    points[0].id, len(points[0].vector), list(points[0].payload.keys()))
+            resp = self.client.upsert(collection_name=self.collection, points=points)
+            print("UPSERT RESPONSE:", resp)
+            print("COUNT AFTER UPSERT:", self.client.count(collection_name=self.collection))
+            print(resp)
+
+
+
+    #добавить score_threshold если к примеру <0.4 то маленькая достоверность если 0.4<=x<=0.7средняя, >7 - высокая 
+    def search(self, query_vector, top_k: int = 5) -> SearchResult:
+        response = self.client.query_points(
+            collection_name = self.collection,
+            query = query_vector,
+            with_payload = True,
+            limit = top_k,
+        )
+        hits = response.points
+        meta = []
+        texts = []
+        for p in hits:
+            payload = getattr(p, "payload", None) or {}
+            text = payload.get("text", "")
+            source = payload.get("source", "")
+            author = payload.get("author", "")
+            page = payload.get("page", -1)
+            if text:
+                meta.append(ChunkMetaData(source, author, page))
+                texts.append(text)
+        
+        result = SearchResult(meta, texts)
+        return result
+    
+    def close(self):
+        self.client.close()
+#---------------------------------------------------------------    
+#ПРОТЕСТИРОВАТЬ DENSE(СЕЙЧАС ЕСТЬ), SPARSE, HYBRID методы поиска
+#---------------------------------------------------------------
+#+RERANKING добавить
+#Query expansion
+
+# +Поменять вид Qdrant'a(сделать его по другому т.к этот вариант не сохраняет локально)
