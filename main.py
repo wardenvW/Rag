@@ -8,6 +8,7 @@ from google import genai
 from google.genai import types
 import time
 import os
+from dotenv import load_dotenv
 
 
 #model = SentenceTransformer("BAAI/bge-m3")
@@ -15,11 +16,12 @@ import os
 
 #print(model.get_embedding_dimension())
 
+load_dotenv()
 
 path = pathlib.Path("/home/warden/rag/test6-images.pdf")
 
 API_KEY = os.getenv("API_KEY")
-
+print(API_KEY)
 client = genai.Client(api_key=API_KEY)
 
 
@@ -74,7 +76,7 @@ def start():
             Указывай все возможные страницы, где упоминается контекст.
             """,
             temperature=0.1,
-            max_output_tokens=512,
+            max_output_tokens=50000,
         )
     )
 

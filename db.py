@@ -42,16 +42,6 @@ class VectorStorage:
                 collection_name=self.collection,
                 vectors_config = VectorParams(size=dim, distance=Distance.COSINE),
                 on_disk_payload=True,
-                #optimizers_config=OptimizersConfig(
-                #    deleted_threshold=0.2,
-                #    vacuum_min_vector_number=1,
-                #    default_segment_number=0,
-                #    flush_interval_sec=5,
-                #    max_optimization_threads=1,
-                #    memmap_threshold=None,
-                #    indexing_threshold=20000,
-                #    prevent_unoptimized=None
-                #)
             )
 
     def upsert(self, chunks: List[Chunk]) -> None:
