@@ -93,17 +93,11 @@ class Pipeline:
             for doc in data:
                 try:
                     normalized_data = data_normalize(doc)
-                    print("STEP 1")
                     chunk_data = self.chunker.chunk(normalized_data)
-                    print("CHUNKS:", len(chunk_data))
-                    print("DOC:", doc)
 
                     chunk_texts = [chunk_text for chunk_text, _ in chunk_data]
-                    print("STEP 2")
-                    print("ABOUT TO EMBED:", len(chunk_texts))
+
                     vectors = self.embedder.embed(chunk_texts)
-                    print("VECTORS:", len(vectors))
-                    print(f"EMBED DONE")
 
                     ready_chunks = []
                     for (chunk_text, chunk_meta), vector in zip(chunk_data, vectors):

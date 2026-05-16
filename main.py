@@ -21,7 +21,6 @@ load_dotenv()
 path = pathlib.Path("/home/warden/rag/test6-images.pdf")
 
 API_KEY = os.getenv("API_KEY")
-print(API_KEY)
 client = genai.Client(api_key=API_KEY)
 
 
@@ -30,7 +29,6 @@ time_start = time.time()
 
 embedder = Embedder()
 db = VectorStorage(collection_name="docs")
-print(db.client.get_collection("docs"))
 
 
 #ppl = Pipeline(chunker=RecursiveSplitter(chunk_size=400), embedder=embedder, vector_db=db)
@@ -38,9 +36,8 @@ print(db.client.get_collection("docs"))
 
 print("DOCS IN DB:", db.client.count("docs"))
 def start():
-    query = "?"
+    query = "Кто такой Жук?"
     query_vector = embedder.embed([query])[0]
-    print(len(query_vector))
 
     results = db.search(query_vector)
 
@@ -76,7 +73,6 @@ def start():
             Указывай все возможные страницы, где упоминается контекст.
             """,
             temperature=0.1,
-            max_output_tokens=50000,
         )
     )
 
