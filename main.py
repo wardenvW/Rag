@@ -35,7 +35,7 @@ db = VectorStorage(collection_name="docs")
 
 def start():
     start_2 = time.time()
-    query = "Кто такой Жук?"
+    query = "Кто такая Бабило Валентина?(также её полное ФИО и должность)"
     query_vector = embedder.embed([query])[0]
 
     results = db.search(query_vector)
@@ -71,8 +71,9 @@ def start():
             Отвечай только по предоставленному контексту.
             Если ответа в контексте нет — скажи об этом.
             Указывай все возможные страницы, где упоминается контекст.
+            Исправь орфографические ошибки, если они присутствуют.
             """,
-            temperature=0.2,
+            temperature=0.5,
         )
     )
 
