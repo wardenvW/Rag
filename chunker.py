@@ -17,16 +17,16 @@ class FixedSplitter:
         return chunks
 
 class RecursiveSplitter:
-    def __init__(self, chunk_size: int = 512, overlap: int = 0, separators: List[str] = ["\n\n", "\n", ". ", " ", ""]):
-        self._splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(separators=separators, chunk_size=chunk_size, chunk_overlap=overlap, add_start_index=True)
+    def __init__(self, chunk_size: int = 512, separators: List[str] = ["\n\n", "\n", ". ", " ", ""]):
+        self._splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(separators=separators, chunk_size=chunk_size, add_start_index=True)
         self._chunk_size: int = chunk_size
-        self._overlap: int = overlap
     
     def chunk(self, data: Dict[str, Any]) -> List[Tuple[str, Dict]]:
         try:
             pages = data["payload"]["pages"]
             author = data["payload"]["author"]
             source = data["payload"]["source"]
+            doc_hash = data["payload"]["doc_hash"]
 
             results = []
 
@@ -39,7 +39,8 @@ class RecursiveSplitter:
                     metadata={
                         "page": page_num,
                         "source": source,
-                        "author": author
+                        "author": author,
+                        "doc_hash": doc_hash,
                     }
                 )
 

@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 
 #model = SentenceTransformer("BAAI/bge-m3")
 #model.save("./model")
-
 #print(model.get_embedding_dimension())
 
 load_dotenv()
@@ -34,8 +33,8 @@ db = VectorStorage(collection_name="docs")
 #ppl = Pipeline(chunker=RecursiveSplitter(chunk_size=400), embedder=embedder, vector_db=db)
 #ppl.process(["/home/warden/rag/juk.pdf"])
 
-print("DOCS IN DB:", db.client.count("docs"))
 def start():
+    start_2 = time.time()
     query = "Кто такой Жук?"
     query_vector = embedder.embed([query])[0]
 
@@ -57,7 +56,8 @@ def start():
     ...
 
     Источники:
-    ...
+    ... 
+    (Страницы указаны согласно структуре документа, не внутренней нумерации) - это оставить
 
     Вопрос:
     {query}
@@ -72,7 +72,7 @@ def start():
             Если ответа в контексте нет — скажи об этом.
             Указывай все возможные страницы, где упоминается контекст.
             """,
-            temperature=0.1,
+            temperature=0.2,
         )
     )
 
@@ -80,6 +80,7 @@ def start():
 
     print(response.text)
     print(f"Ответ дан за {(time.time() - time_start):.2f} секунд")
+    print(f"LLM работала {(time.time() - start_2):.2f}")
 
 start()
 db.close()

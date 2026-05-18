@@ -13,8 +13,8 @@ path = os.path.abspath("./vector_bd")
 class ChunkMetaData:
     source: str
     author: str
-    page: int
-
+    page: int  #Переделать в List[int]
+    doc_hash: str
 
 class SearchResult:
     def __init__(self, meta: List[ChunkMetaData], chunks_text: List[str]) -> None:
@@ -27,7 +27,8 @@ class SearchResult:
             res.append({
                 "source": meta.source,
                 "author": meta.author,
-                "page": meta.page,
+                "pages": meta.pages,
+                "doc_hash": meta.doc_hash,
                 "text": text[:100]
             })
         return json.dumps(res, ensure_ascii=False, indent=2)
@@ -57,14 +58,9 @@ class VectorStorage:
             for chunk in chunks
             ]
         
-            print("Upserting points count:", len(points))
             if len(points) > 0:
-                print("Example point id/vector_len/payload_keys:",
-                    points[0].id, len(points[0].vector), list(points[0].payload.keys()))
-            resp = self.client.upsert(collection_name=self.collection, points=points)
-            print("UPSERT RESPONSE:", resp)
-            print("COUNT AFTER UPSERT:", self.client.count(collection_name=self.collection))
-            print(resp)
+                    points[0].id, len(points[0].vector), list(points[0].payload.keys())
+            self.client.upsert(collection_name=self.collection, points=points)
 
 
 
@@ -85,8 +81,9 @@ class VectorStorage:
             source = payload.get("source", "")
             author = payload.get("author", "")
             page = payload.get("page", -1)
+            doc_hash = payload.get("doc_hash", "")
             if text:
-                meta.append(ChunkMetaData(source, author, page))
+                meta.append(ChunkMetaData(source, author, page, doc_hash))
                 texts.append(text)
         
         result = SearchResult(meta, texts)
