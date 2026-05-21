@@ -17,8 +17,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-path = pathlib.Path("/home/warden/rag/test6-images.pdf")
-
 API_KEY = os.getenv("API_KEY")
 client = genai.Client(api_key=API_KEY)
 
@@ -29,13 +27,14 @@ time_start = time.time()
 embedder = Embedder()
 db = VectorStorage(collection_name="docs")
 
+start1 = time.time()
 
-#ppl = Pipeline(chunker=RecursiveSplitter(chunk_size=400), embedder=embedder, vector_db=db)
-#ppl.process(["/home/warden/rag/juk.pdf"])
+ppl = Pipeline(chunker=RecursiveSplitter(chunk_size=2500), embedder=embedder, vector_db=db)
+#ppl.process(["/home/warden/rag/УК_РБ-1-150.pdf"])
 
 def start():
     start_2 = time.time()
-    query = "Кто такая Бабило Валентина?(также её полное ФИО и должность)"
+    query = "Что будет если корпоративную сеть, выкачать оттуда коммерческую тайну и продать в даркнете?"
     query_vector = embedder.embed([query])[0]
 
     results = db.search(query_vector)
@@ -71,7 +70,7 @@ def start():
             Отвечай только по предоставленному контексту.
             Если ответа в контексте нет — скажи об этом.
             Указывай все возможные страницы, где упоминается контекст.
-            Исправь орфографические ошибки, если они присутствуют.
+            Если вопрос стоит общий, то выдавай сразу всю статью/часть.
             """,
             temperature=0.5,
         )
@@ -82,6 +81,6 @@ def start():
     print(response.text)
     print(f"Ответ дан за {(time.time() - time_start):.2f} секунд")
     print(f"LLM работала {(time.time() - start_2):.2f}")
-
+#print(f"Сохранил за {(time.time() - start1):.2f}")
 start()
 db.close()

@@ -1,10 +1,13 @@
 from typing import List, Dict, Any
 from pathlib import Path, PurePath
 from hashlib import file_digest
-from pypdf import PdfReader
+import pymupdf4llm
 import re
 import numpy as np
 import uuid
+
+
+
 
 def extract_author(text: str) -> List[str]:
     pattern = r'[А-ЯЁ][а-яё]+\s[А-ЯЁ]\.[А-ЯЁ]\.|[А-ЯЁ]\.[А-ЯЁ]\.\s[А-ЯЁ][а-яё]+'
@@ -20,19 +23,15 @@ def extract_author(text: str) -> List[str]:
     return list(normalized)
 
 def clean_pdf_text(text: str) -> str:
-    #"эффек-\nтивным" -> "эффективным"
-    text = re.sub(r"-\s*\n\s*", "", text)
+    text = re.sub(r"==> picture \[\d+ x \d+\] <==", "\n[ИЗОБРАЖЕНИЕ]\n", text)
+
+    text = re.sub(r"----- Start of picture text -----", "", text)
+    text = re.sub(r"----- End of picture text -----", "", text)
+
+    text = re.sub(r"<br>", "", text)
     
-    text = re.sub(r"[ \t]+", " ", text)
-    
-    text = re.sub(r"\n\s*\n+", "[[PARAGRAPH]]", text)
-    
-    text = re.sub(r"\n", " ", text)
-    
-    text = text.replace("[[PARAGRAPH]]", "\n\n")
-    
-    text = re.sub(r" +", " ", text)
-    
+
+
     return text.strip()
 
 def get_doc_hash(document) -> str:
@@ -42,13 +41,14 @@ def get_doc_hash(document) -> str:
 
 def data_normalize(document) -> Dict[str, Any]:    
     try:
-        reader = PdfReader(document)
+        pages = pymupdf4llm.to_text(document, ocr_language = "rus+eng", page_chunks = True)
+        print(pages)
         pages_data = [
             {
-                "page": index, 
-                "text": clean_pdf_text(page.extract_text()),       
+                "page": page["metadata"]["page_number"], 
+                "text": clean_pdf_text(page["text"]),       
             } 
-            for index, page in enumerate(reader.pages, start=1)
+            for page in pages
         ]
 
         source = PurePath(document).name
@@ -56,7 +56,7 @@ def data_normalize(document) -> Dict[str, Any]:
         author_pages = [0, 1, -1, -2] if len(pages_data) > 4 else [0, -1]
         author_mentioned_pages = " ".join(pages_data[page]["text"] for page in author_pages)
 
-        author = list(reader.metadata.author) if reader.metadata.author else extract_author(author_mentioned_pages)
+        author = extract_author(author_mentioned_pages)
 
         d_hash = get_doc_hash(document)
 
@@ -85,11 +85,10 @@ class Chunk:
         return (isinstance(other, Chunk)) and self.id == other.id
 
 class Pipeline:
-    def __init__(self, chunker, embedder, vector_db, batch_size: int = 32) -> None:
+    def __init__(self, chunker, embedder, vector_db) -> None:
         self.chunker = chunker 
         self.embedder = embedder
         self.vector_db = vector_db 
-        self.batch_size = batch_size
 
     def process(self, data: List[Path]) -> None:
         for doc in data:
@@ -98,7 +97,7 @@ class Pipeline:
                 chunk_data = self.chunker.chunk(normalized_data)
 
                 chunk_texts = [chunk_text for chunk_text, _ in chunk_data]
-                vectors = self.embedder.embed(chunk_texts, self.batch_size)
+                vectors = self.embedder.embed(chunk_texts)
 
                 ready_chunks = []
                 for (chunk_text, chunk_meta), vector in zip(chunk_data, vectors):
@@ -113,3 +112,6 @@ class Pipeline:
             except Exception as e:
                 print(e)
                 raise
+
+
+#sudo apt install tesseract-ocr tesseract-ocr-rus tesseract-ocr-eng В ОБЯЗАТЕЛЬНОМ ПОРЯДКЕ, чтобы установился движок OCR занимающийся распознаванием трудного текста, таблиц и тд

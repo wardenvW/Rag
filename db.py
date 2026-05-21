@@ -13,7 +13,7 @@ path = os.path.abspath("./vector_bd")
 class ChunkMetaData:
     source: str
     author: str
-    page: int  #Переделать в List[int]
+    page: List[int]
     doc_hash: str
 
 class SearchResult:
