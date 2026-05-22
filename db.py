@@ -12,7 +12,7 @@ path = os.path.abspath("./vector_bd")
 @dataclass
 class ChunkMetaData:
     source: str
-    author: str
+    author: List[str]
     page: List[int]
     doc_hash: str
 
@@ -27,7 +27,7 @@ class SearchResult:
             res.append({
                 "source": meta.source,
                 "author": meta.author,
-                "pages": meta.pages,
+                "pages": meta.page,
                 "doc_hash": meta.doc_hash,
                 "text": text[:100]
             })
@@ -80,7 +80,7 @@ class VectorStorage:
             text = payload.get("text", "")
             source = payload.get("source", "")
             author = payload.get("author", "")
-            page = payload.get("page", -1)
+            page = payload.get("page", [])
             doc_hash = payload.get("doc_hash", "")
             if text:
                 meta.append(ChunkMetaData(source, author, page, doc_hash))

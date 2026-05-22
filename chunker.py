@@ -97,3 +97,4 @@ class RecursiveSplitter:
 ####
 ###
 
+# + РАЗВЕРНУТЬ Qdrant на localhost

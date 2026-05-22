@@ -82,5 +82,8 @@ def start():
     print(f"Ответ дан за {(time.time() - time_start):.2f} секунд")
     print(f"LLM работала {(time.time() - start_2):.2f}")
 #print(f"Сохранил за {(time.time() - start1):.2f}")
-start()
 db.close()
+
+
+a = pathlib.PurePath(__file__)
+print(a)
