@@ -23,7 +23,7 @@ ALLOWED_FILE_TYPES = [".pdf", ".doc", ".docx", ...]
 
 LOG_LEVEL = logging.DEBUG
 
-def init_loggin() -> logging.Logger:
+def init_loggin() -> None:
     LOG_FORMAT = '%(asctime)s | %(levelname)-7s | %(name)s - %(message)s'
     DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
