@@ -1,7 +1,4 @@
-from pipeline import Pipeline
-from chunker import RecursiveSplitter
-from embed import Embedder
-from db import VectorStorage
+from rag_wv import Pipeline, RecursiveSplitter, Embedder, VectorStorage
 from sentence_transformers import SentenceTransformer
 import pathlib
 from google import genai
@@ -9,6 +6,7 @@ from google.genai import types
 import time
 import os
 from dotenv import load_dotenv
+
 
 
 #model = SentenceTransformer("BAAI/bge-m3")
