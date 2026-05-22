@@ -16,6 +16,7 @@ COLLECTION_NAME = "docs"
 VECTOR_DIM = 1024
 DEFAULT_CHUNK_SIZE = 512
 DEFAULT_CHUNK_OVERLAP = 0
+DEFAULT_BATCH_SIZE = 32
 
 API_KEY = os.getenv("API_KEY")
 
@@ -23,7 +24,7 @@ ALLOWED_FILE_TYPES = [".pdf", ".doc", ".docx", ...]
 
 LOG_LEVEL = logging.DEBUG
 
-def init_loggin() -> None:
+def init_logging() -> None:
     LOG_FORMAT = '%(asctime)s | %(levelname)-7s | %(name)s - %(message)s'
     DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 

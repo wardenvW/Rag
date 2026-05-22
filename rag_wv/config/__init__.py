@@ -6,6 +6,8 @@ from .config import (
     VECTOR_DIM,
     DEFAULT_CHUNK_OVERLAP,
     DEFAULT_CHUNK_SIZE,
+    DEFAULT_BATCH_SIZE,
     API_KEY,
-    ALLOWED_FILE_TYPES
+    ALLOWED_FILE_TYPES,
+    init_logging,
 )

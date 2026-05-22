@@ -2,13 +2,8 @@ from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from typing import Dict, Any, Tuple
-from dataclasses import dataclass
-
-@dataclass
-class PageSpan:
-    page: int
-    start: int
-    end: int
+from models import PageSpan
+from config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE
 
 
 def create_page_mapping(pages: List[Dict[str, Any]]) -> List[PageSpan]:

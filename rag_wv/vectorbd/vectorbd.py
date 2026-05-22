@@ -1,41 +1,14 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance, PointStruct, OptimizersConfig
+from qdrant_client.models import VectorParams, Distance, PointStruct
 from typing import List
-from dataclasses import dataclass
-import json
-from pipeline import Chunk
-import os
+from models import Chunk, ChunkMetaData, SearchResult
+from config import QDRANT_PATH, QDRANT_URL, COLLECTION_NAME, VECTOR_DIM
 
 
-path = os.path.abspath("./vector_bd")
 
-@dataclass
-class ChunkMetaData:
-    source: str
-    author: List[str]
-    page: List[int]
-    doc_hash: str
-
-class SearchResult:
-    def __init__(self, meta: List[ChunkMetaData], chunks_text: List[str]) -> None:
-        self.meta: List[ChunkMetaData] = meta
-        self.text: List[str] =  chunks_text
-
-    def __repr__(self) -> str:
-        res = []
-        for meta, text in zip(self.meta, self.text):
-            res.append({
-                "source": meta.source,
-                "author": meta.author,
-                "pages": meta.page,
-                "doc_hash": meta.doc_hash,
-                "text": text[:100]
-            })
-        return json.dumps(res, ensure_ascii=False, indent=2)
-
-
+#ПЕРЕДЕЛАТЬ ЛОГИКУ ПОД PATH/URL
 class VectorStorage:
-    def __init__(self, path: str = path, collection_name: str = "docs", dim: int = 1024) -> None:
+    def __init__(self, path: str = QDRANT_PATH, collection_name: str = COLLECTION_NAME, dim: int = VECTOR_DIM) -> None:
         self.client: QdrantClient = QdrantClient(path=path)
         self.collection = collection_name
         if not self.client.collection_exists(self.collection):

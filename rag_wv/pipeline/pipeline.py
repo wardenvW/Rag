@@ -1,13 +1,10 @@
 from typing import List, Dict, Any
 from pathlib import Path, PurePath
 from hashlib import file_digest
+from models import Chunk
 import pymupdf4llm
 import re
-import numpy as np
 import uuid
-
-
-
 
 def extract_author(text: str) -> List[str]:
     pattern = r'[А-ЯЁ][а-яё]+\s[А-ЯЁ]\.[А-ЯЁ]\.|[А-ЯЁ]\.[А-ЯЁ]\.\s[А-ЯЁ][а-яё]+'
@@ -30,8 +27,6 @@ def clean_pdf_text(text: str) -> str:
 
     text = re.sub(r"<br>", "", text)
     
-
-
     return text.strip()
 
 def get_doc_hash(document) -> str:
@@ -73,16 +68,6 @@ def data_normalize(document) -> Dict[str, Any]:
     except Exception as e:
         print(e)
         raise
-
-class Chunk:
-    def __init__(self, text: str, vector: np.ndarray, payload: Dict[str, Any], id: str)-> None:
-        self.text: str = text
-        self.vector: np.ndarray = vector
-        self.payload: Dict[str, Any]= payload
-        self.id: str = id
-
-    def __eq__(self, other) -> bool:
-        return (isinstance(other, Chunk)) and self.id == other.id
 
 class Pipeline:
     def __init__(self, chunker, embedder, vector_db) -> None:
