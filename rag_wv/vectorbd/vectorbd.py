@@ -1,50 +1,96 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance, PointStruct
+from qdrant_client.models import VectorParams, Distance, PointStruct, SparseVectorParams, SparseVector, Prefetch, FusionQuery, Fusion
 from typing import List
 from models import Chunk, ChunkMetaData, SearchResult
-from config import QDRANT_PATH, QDRANT_URL, COLLECTION_NAME, VECTOR_DIM
+from config import QDRANT_PATH, QDRANT_URL, COLLECTION_NAME, VECTOR_DIM, USE_HYBRID, TOP_K, SAVE_HYBRID
 
-
-
-#ПЕРЕДЕЛАТЬ ЛОГИКУ ПОД PATH/URL
 class VectorStorage:
-    def __init__(self, path: str = QDRANT_PATH, collection_name: str = COLLECTION_NAME, dim: int = VECTOR_DIM) -> None:
-        self.client: QdrantClient = QdrantClient(path=path)
-        self.collection = collection_name
-        if not self.client.collection_exists(self.collection):
-            self.client.create_collection(
-                collection_name=self.collection,
-                vectors_config = VectorParams(size=dim, distance=Distance.COSINE),
-                on_disk_payload=True,
-            )
+    def __init__(self, path: str = QDRANT_PATH, url: str = QDRANT_URL, dim: int = VECTOR_DIM, in_memory: bool = True) -> None:
+        self.collection = COLLECTION_NAME
+
+        try:   
+            if in_memory:
+                self.client: QdrantClient = QdrantClient(path=path)
+            else:
+                self.client: QdrantClient = QdrantClient(url=url)
+                
+            if not self.client.collection_exists(self.collection):
+                if SAVE_HYBRID:
+                    self.client.create_collection(
+                        collection_name=self.collection,
+                        vectors_config={
+                            "dense": VectorParams(size=dim, distance=Distance.COSINE),
+                        },
+                        sparse_vectors_config={
+                            "sparse": SparseVectorParams()
+                        },
+                        on_disk_payload=True,
+                    )
+                else:
+                        self.client.create_collection(
+                        collection_name=self.collection,
+                        vectors_config = VectorParams(size=dim, distance=Distance.COSINE),
+                        on_disk_payload=True,
+                    )
+        except Exception as e:
+            pass
 
     def upsert(self, chunks: List[Chunk]) -> None:
-            points = [
-            PointStruct(
-                id=chunk.id,
-                vector=chunk.vector.tolist(),
-                payload={
-                    **chunk.payload,
-                    "text": chunk.text
-                }
+            try:
+                points = []
+
+                for chunk in chunks:
+                        if SAVE_HYBRID:
+                            vector_data = {
+                                "dense": chunk.dense_vector.tolist(),
+                                "sparse": SparseVector(indices = chunk.sparse_vector.indices, values = chunk.sparse_vector.values)
+                            }
+                        else:
+                            vector_data = chunk.dense_vector.tolist()
+
+                        points.append(
+                            PointStruct(
+                                id = chunk.id,
+                                vector = vector_data,
+                                payload={
+                                    **chunk.payload,
+                                    "text": chunk.text
+                                }
+                            )
+                        )
+
+                if len(points) > 0:
+                    self.client.upsert(collection_name=self.collection, points=points)
+            except Exception as e:
+                pass
+
+
+
+    #добавить score_threshold если к примеру <0.4 то маленькая достоверность если 0.4<=x<=0.7средняя, >7 - высокая  //ЭТО в DEBUG/INFO
+    def search(self, query_dense, query_sparse = None, top_k: int = TOP_K) -> SearchResult: #Потестить добавить Matryoshka  
+        if USE_HYBRID:
+            response = self.client.query_points(
+                collection_name= self.collection,
+                prefetch= [
+                    Prefetch(query=query_dense, using="dense",limit=top_k),
+
+                    Prefetch(query=query_sparse, using="sparse", limit=top_k)
+                ],
+                query= FusionQuery(
+                    fusion = Fusion.RRF
+                ),
+                with_payload = True,
+                limit= top_k
             )
-            for chunk in chunks
-            ]
+        else:
+            response = self.client.query_points(
+                collection_name = self.collection,
+                query = query_dense,
+                with_payload = True,
+                limit = top_k,
+                using = "dense"
+            )
         
-            if len(points) > 0:
-                    points[0].id, len(points[0].vector), list(points[0].payload.keys())
-            self.client.upsert(collection_name=self.collection, points=points)
-
-
-
-    #добавить score_threshold если к примеру <0.4 то маленькая достоверность если 0.4<=x<=0.7средняя, >7 - высокая 
-    def search(self, query_vector, top_k: int = 5) -> SearchResult:
-        response = self.client.query_points(
-            collection_name = self.collection,
-            query = query_vector,
-            with_payload = True,
-            limit = top_k,
-        )
         hits = response.points
         meta = []
         texts = []
@@ -64,10 +110,5 @@ class VectorStorage:
     
     def close(self):
         self.client.close()
-#---------------------------------------------------------------    
-#ПРОТЕСТИРОВАТЬ DENSE(СЕЙЧАС ЕСТЬ), SPARSE, HYBRID методы поиска
-#---------------------------------------------------------------
 #+RERANKING добавить
 #Query expansion
-
-# +Поменять вид Qdrant'a(сделать его по другому т.к этот вариант не сохраняет локально)
