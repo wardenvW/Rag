@@ -1,5 +1,4 @@
-from .config import (
-    EMB_MODEL_PATH,
+from .config_settings import (
     QDRANT_PATH,
     QDRANT_URL,
     COLLECTION_NAME,
@@ -9,5 +8,6 @@ from .config import (
     DEFAULT_BATCH_SIZE,
     API_KEY,
     ALLOWED_FILE_TYPES,
+    EMB_MODEL_NAME,
     init_logging,
 )

@@ -1,17 +1,19 @@
-from sentence_transformers import SentenceTransformer
+from dotenv import load_dotenv
+load_dotenv()
+from FlagEmbedding import BGEM3FlagModel
 from typing import List
-import numpy as np
-
+from ..config import EMB_MODEL_NAME, DEFAULT_BATCH_SIZE
 
 class Embedder:
-    def __init__(self, path: str = "./model") -> None:
-        self.model: SentenceTransformer = SentenceTransformer(path)
+    def __init__(self, use_hybrid: bool = False) -> None:
 
-    def embed(self, chunks: List[str], batch_size: int = 32) -> List[np.ndarray]:
-        embeddings = self.model.encode(
-            chunks,
-            normalize_embeddings=True,
-            convert_to_numpy=True,
-            batch_size=batch_size      #Изменить batch_size в зависимости от мощностей вашей системы
-        )
-        return embeddings
+        self.model: BGEM3FlagModel = BGEM3FlagModel(model_name_or_path=EMB_MODEL_NAME, use_fp16=True, batch_size=DEFAULT_BATCH_SIZE, return_dense=True, return_sparse=use_hybrid, trust_remote_code=True) #добавить batch_size в конфиг
+        self.use_hybrid: bool = use_hybrid
+
+    def embed(self, chunks: List[str]):
+        try:
+            result = self.model.encode(chunks, batch_size=DEFAULT_BATCH_SIZE, return_dense=True, return_sparse=self.use_hybrid)
+            return result
+        except Exception as e:
+            pass
+#ДОБАВИТЬ ЛОГИРОВАНИЕ + ОБРАБОТКУ Exception
