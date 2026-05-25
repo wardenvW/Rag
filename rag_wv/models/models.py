@@ -3,7 +3,6 @@ from typing import List, Dict, Any
 import numpy as np
 import json
 
-
 @dataclass
 class PageSpan:
     page: int
@@ -16,10 +15,12 @@ class ChunkMetaData:
     author: List[str]
     page: List[int]
     doc_hash: str
+
 class Chunk:
-    def __init__(self, text: str, vector: np.ndarray, payload: Dict[str, Any], id: str)-> None:
+    def __init__(self, text: str, dense_vector: np.ndarray, sparse_vector ,payload: Dict[str, Any], id: str)-> None: # add an annotation to 'sparse_vector'
         self.text: str = text
-        self.vector: np.ndarray = vector
+        self.dense_vector: np.ndarray = dense_vector
+        self.sparse_vector = sparse_vector  # add an annotation
         self.payload: Dict[str, Any]= payload
         self.id: str = id
 
