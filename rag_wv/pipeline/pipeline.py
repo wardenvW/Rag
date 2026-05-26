@@ -1,6 +1,5 @@
 import uuid
 from typing import List
-from hashlib import file_digest
 from models import Chunk
 from pathlib import Path
 from ..utils import data_normalize
