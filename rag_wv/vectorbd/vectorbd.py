@@ -1,9 +1,9 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct, SparseVectorParams, SparseVector, Prefetch, FusionQuery, Fusion
 from typing import List
-from models import Chunk, ChunkMetaData, SearchResult
-from config import QDRANT_PATH, QDRANT_URL, COLLECTION_NAME, VECTOR_DIM, USE_HYBRID, TOP_K, SAVE_HYBRID
-from sentence_transformers import CrossEncoder
+from ..models import Chunk, ChunkMetaData, SearchResult
+from ..config import QDRANT_PATH, QDRANT_URL, COLLECTION_NAME, VECTOR_DIM, USE_HYBRID, TOP_K, SAVE_HYBRID, USE_RERANKER
+from ..reranker import Reranker
 
 class VectorStorage:
     def __init__(self, path: str = QDRANT_PATH, url: str = QDRANT_URL, dim: int = VECTOR_DIM, in_memory: bool = True) -> None:
@@ -68,7 +68,7 @@ class VectorStorage:
 
 
     #добавить score_threshold если к примеру <0.4 то маленькая достоверность если 0.4<=x<=0.7средняя, >7 - высокая  //ЭТО в DEBUG/INFO
-    def search(self, query_dense, query_sparse = None, top_k: int = TOP_K) -> SearchResult: #Потестить добавить Matryoshka  
+    def search(self, query, query_dense, query_sparse = None, top_k: int = TOP_K) -> SearchResult: #Потестить добавить Matryoshka  
         if USE_HYBRID:
             response = self.client.query_points(
                 collection_name= self.collection,
@@ -93,26 +93,24 @@ class VectorStorage:
             )
         
         hits = response.points
-        meta = []
-        texts = []
+        search_result: List[SearchResult] = []
         for p in hits:
             payload = getattr(p, "payload", None) or {}
             text = payload.get("text", "")
-            source = payload.get("source", "")
-            author = payload.get("author", "")
-            page = payload.get("page", [])
-            doc_hash = payload.get("doc_hash", "")
-            if text:
-                meta.append(ChunkMetaData(source, author, page, doc_hash))
-                texts.append(text)
-        
-        result = SearchResult(meta, texts)
-        return result
+
+            meta = ChunkMetaData(
+                    source=payload.get("source", ""),
+                    author=payload.get("author", ""),
+                    page=payload.get("page", []),
+                    doc_hash=payload.get("doc_hash", "")
+                )
+            search_result.append(SearchResult(meta=meta, text=text))
+
+        if USE_RERANKER:
+            rkr = Reranker()
+            search_result = rkr.rerank(query, search_result)
+
+        return search_result
     
     def close(self):
         self.client.close()
-#+RERANKING добавить
-
-model = CrossEncoder("qilowoq/bge-reranker-v2-m3-en-ru")
-
-query = "Что будет за убийство?"
