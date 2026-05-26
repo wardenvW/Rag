@@ -3,6 +3,7 @@ from qdrant_client.models import VectorParams, Distance, PointStruct, SparseVect
 from typing import List
 from models import Chunk, ChunkMetaData, SearchResult
 from config import QDRANT_PATH, QDRANT_URL, COLLECTION_NAME, VECTOR_DIM, USE_HYBRID, TOP_K, SAVE_HYBRID
+from sentence_transformers import CrossEncoder
 
 class VectorStorage:
     def __init__(self, path: str = QDRANT_PATH, url: str = QDRANT_URL, dim: int = VECTOR_DIM, in_memory: bool = True) -> None:
@@ -29,7 +30,7 @@ class VectorStorage:
                 else:
                         self.client.create_collection(
                         collection_name=self.collection,
-                        vectors_config = VectorParams(size=dim, distance=Distance.COSINE),
+                        vectors_config = {"dense": VectorParams(size=dim, distance=Distance.COSINE)},
                         on_disk_payload=True,
                     )
         except Exception as e:
@@ -46,7 +47,7 @@ class VectorStorage:
                                 "sparse": SparseVector(indices = chunk.sparse_vector.indices, values = chunk.sparse_vector.values)
                             }
                         else:
-                            vector_data = chunk.dense_vector.tolist()
+                            vector_data = {"dense": chunk.dense_vector.tolist()}
 
                         points.append(
                             PointStruct(
@@ -111,4 +112,7 @@ class VectorStorage:
     def close(self):
         self.client.close()
 #+RERANKING добавить
-#Query expansion
+
+model = CrossEncoder("qilowoq/bge-reranker-v2-m3-en-ru")
+
+query = "Что будет за убийство?"

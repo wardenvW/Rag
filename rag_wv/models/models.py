@@ -17,7 +17,7 @@ class ChunkMetaData:
     doc_hash: str
 
 class Chunk:
-    def __init__(self, text: str, dense_vector: np.ndarray, sparse_vector ,payload: Dict[str, Any], id: str)-> None: # add an annotation to 'sparse_vector'
+    def __init__(self, text: str, dense_vector: np.ndarray, sparse_vector, payload: Dict[str, Any], id: str)-> None: # add an annotation to 'sparse_vector'
         self.text: str = text
         self.dense_vector: np.ndarray = dense_vector
         self.sparse_vector = sparse_vector  # add an annotation
@@ -31,6 +31,7 @@ class SearchResult:
     def __init__(self, meta: List[ChunkMetaData], chunks_text: List[str]) -> None:
         self.meta: List[ChunkMetaData] = meta
         self.text: List[str] =  chunks_text
+        self.score: float = None
 
     def __repr__(self) -> str:
         res = []

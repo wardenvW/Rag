@@ -21,11 +21,16 @@ QDRANT_PATH: str = BASE_DIR / os.getenv("QDRANT_PATH")
 QDRANT_URL: str = os.getenv("QDRANT_URL")
 COLLECTION_NAME: str = "docs"
 VECTOR_DIM: int = 1024
-TOP_K: int = 5
+TOP_K: int = 10
 
 # --- Параметры Chunker'а ---
 DEFAULT_CHUNK_SIZE: int = 512
 DEFAULT_CHUNK_OVERLAP: int = 0
+
+# --- Reranker и всё с ним связанное ---
+RERANKER_NAME: str = "qilowoq/bge-reranker-v2-m3-en-ru"
+USE_RERANKER: bool = True
+TOP_N: int = 5
 
 # --- LLM API KEY ---
 API_KEY: str = os.getenv("API_KEY")
