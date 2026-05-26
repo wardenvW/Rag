@@ -68,7 +68,7 @@ class VectorStorage:
 
 
     #добавить score_threshold если к примеру <0.4 то маленькая достоверность если 0.4<=x<=0.7средняя, >7 - высокая  //ЭТО в DEBUG/INFO
-    def search(self, query, query_dense, query_sparse = None, top_k: int = TOP_K) -> SearchResult: #Потестить добавить Matryoshka  
+    def search(self, query, query_dense, query_sparse = None, top_k: int = TOP_K) -> List[SearchResult]: #Потестить добавить Matryoshka  
         if USE_HYBRID:
             response = self.client.query_points(
                 collection_name= self.collection,
