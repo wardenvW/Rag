@@ -2,5 +2,6 @@ from .models import (
     Chunk,
     ChunkMetaData,
     PageSpan,
-    SearchResult
+    SearchResult,
+    SparseVectorData,
 )

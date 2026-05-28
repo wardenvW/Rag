@@ -36,7 +36,7 @@ def start():
     query_vector = embedder.embed([query])[0]
 
     results = db.search(query_vector)
-
+    #изменить логику т.к db.search возвращает другой тип данных теперь
     context = "\n\n".join(
     f"[{m.source} | Возможные страницы: {m.page}]\n{text}"
     for m, text in zip(results.meta, results.text)

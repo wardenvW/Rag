@@ -50,9 +50,7 @@ class RecursiveSplitter:
             full_text = ""
 
 
-            for page in pages:
-                text = page["text"]
-                full_text += text + " "
+            full_text = " ".join(page["text"] for page in pages) + " "
 
             doc = Document(
                 page_content= full_text,

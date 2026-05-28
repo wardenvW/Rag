@@ -21,17 +21,15 @@ class Pipeline:
                 vectors = self.embedder.embed(chunk_texts)
 
                 ready_chunks = []
-                for (chunk_text, chunk_meta), vector in zip(chunk_data, vectors):
+                for (chunk_text, chunk_meta), d_vector, sp_vector in zip(chunk_data, vectors["dense"], vectors["sparse"]):
                     unique_str = f"{chunk_meta['doc_hash']}_{chunk_text}"
                     uid = str(uuid.uuid5(uuid.NAMESPACE_DNS, unique_str))
-
-                    chunk = Chunk(text=chunk_text, vector=vector, payload=chunk_meta, id=uid)
-
+                    
+                    chunk = Chunk(text=chunk_text, dense_vector=d_vector, sparse_vector=sp_vector, payload=chunk_meta, id=uid)
                     ready_chunks.append(chunk)
 
                 self.vector_db.upsert(ready_chunks)
             except Exception as e:
                 print(e)
                 raise
-
 #sudo apt install tesseract-ocr tesseract-ocr-rus tesseract-ocr-eng В ОБЯЗАТЕЛЬНОМ ПОРЯДКЕ, чтобы установился движок OCR занимающийся распознаванием трудного текста, таблиц и тд

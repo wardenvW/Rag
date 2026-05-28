@@ -7,7 +7,7 @@ class Reranker:
     def __init__(self) -> None:
         self.model: CrossEncoder = CrossEncoder(RERANKER_NAME)
     
-    def rerank(self, query: str, search_result: List[SearchResult]):
+    def rerank(self, query: str, search_result: List[SearchResult]) -> List[SearchResult]:
         res = self.model.predict([[query, data.text] for data in search_result])
 
         for sc, obj in zip(res, search_result):

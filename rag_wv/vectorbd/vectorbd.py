@@ -1,7 +1,7 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct, SparseVectorParams, SparseVector, Prefetch, FusionQuery, Fusion
-from typing import List
-from ..models import Chunk, ChunkMetaData, SearchResult
+from typing import List, Optional
+from ..models import Chunk, ChunkMetaData, SearchResult, SparseVectorData
 from ..config import QDRANT_PATH, QDRANT_URL, COLLECTION_NAME, VECTOR_DIM, USE_HYBRID, TOP_K, SAVE_HYBRID, USE_RERANKER
 from ..reranker import Reranker
 
@@ -28,11 +28,17 @@ class VectorStorage:
                         on_disk_payload=True,
                     )
                 else:
-                        self.client.create_collection(
-                        collection_name=self.collection,
-                        vectors_config = {"dense": VectorParams(size=dim, distance=Distance.COSINE)},
-                        on_disk_payload=True,
-                    )
+                    self.client.create_collection(
+                    collection_name=self.collection,
+                    vectors_config = {"dense": VectorParams(size=dim, distance=Distance.COSINE)},
+                    on_disk_payload=True,
+                )
+            
+            if USE_RERANKER:
+                self.reranker = Reranker()
+            else:
+                self.reranker = None
+
         except Exception as e:
             pass
 
@@ -43,11 +49,11 @@ class VectorStorage:
                 for chunk in chunks:
                         if SAVE_HYBRID:
                             vector_data = {
-                                "dense": chunk.dense_vector.tolist(),
+                                "dense": chunk.dense_vector,
                                 "sparse": SparseVector(indices = chunk.sparse_vector.indices, values = chunk.sparse_vector.values)
                             }
                         else:
-                            vector_data = {"dense": chunk.dense_vector.tolist()}
+                            vector_data = {"dense": chunk.dense_vector}
 
                         points.append(
                             PointStruct(
@@ -68,14 +74,14 @@ class VectorStorage:
 
 
     #добавить score_threshold если к примеру <0.4 то маленькая достоверность если 0.4<=x<=0.7средняя, >7 - высокая  //ЭТО в DEBUG/INFO
-    def search(self, query, query_dense, query_sparse = None, top_k: int = TOP_K) -> List[SearchResult]: #Потестить добавить Matryoshka  
+    def search(self, query, query_dense, query_sparse: Optional[SparseVectorData] = None, top_k: int = TOP_K) -> List[SearchResult]: #Потестить добавить Matryoshka  
         if USE_HYBRID:
             response = self.client.query_points(
                 collection_name= self.collection,
                 prefetch= [
                     Prefetch(query=query_dense, using="dense",limit=top_k),
 
-                    Prefetch(query=query_sparse, using="sparse", limit=top_k)
+                    Prefetch(query=SparseVector(indices=query_sparse.indices, values=query_sparse.values), using="sparse", limit=top_k)
                 ],
                 query= FusionQuery(
                     fusion = Fusion.RRF
@@ -100,15 +106,15 @@ class VectorStorage:
 
             meta = ChunkMetaData(
                     source=payload.get("source", ""),
-                    author=payload.get("author", ""),
+                    author=payload.get("author", list()),
                     page=payload.get("page", []),
                     doc_hash=payload.get("doc_hash", "")
                 )
             search_result.append(SearchResult(meta=meta, text=text))
 
         if USE_RERANKER:
-            rkr = Reranker()
-            search_result = rkr.rerank(query, search_result)
+            if self.reranker:
+                search_result = self.reranker.rerank(query, search_result)
 
         return search_result
     
