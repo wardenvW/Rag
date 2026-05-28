@@ -4,19 +4,27 @@ from typing import List, Optional
 from ..models import Chunk, ChunkMetaData, SearchResult, SparseVectorData
 from ..config import QDRANT_PATH, QDRANT_URL, COLLECTION_NAME, VECTOR_DIM, USE_HYBRID, TOP_K, SAVE_HYBRID, USE_RERANKER
 from ..reranker import Reranker
+import logging
 
+logger = logging.getLogger(__name__)
 class VectorStorage:
     def __init__(self, path: str = QDRANT_PATH, url: str = QDRANT_URL, dim: int = VECTOR_DIM, in_memory: bool = True) -> None:
         self.collection = COLLECTION_NAME
 
         try:   
             if in_memory:
+                logger.info("Initialize local(in-memory) Qdrant client")
                 self.client: QdrantClient = QdrantClient(path=path)
+                logger.info("Success")
             else:
+                logger.info("Initialize local(web) Qdrant client")
                 self.client: QdrantClient = QdrantClient(url=url)
+                logger.info("Success")
                 
             if not self.client.collection_exists(self.collection):
+                logger.debug("Creating new collection")
                 if SAVE_HYBRID:
+                    logger.debug("option SAVE_HYBRID - True")
                     self.client.create_collection(
                         collection_name=self.collection,
                         vectors_config={
@@ -27,25 +35,31 @@ class VectorStorage:
                         },
                         on_disk_payload=True,
                     )
+                    logger.debug(f"dim({dim}), distance(COSINE), on_disk_payload(True)")
                 else:
+                    logger.debug("option SAVE_HYBRID - False")
                     self.client.create_collection(
                     collection_name=self.collection,
                     vectors_config = {"dense": VectorParams(size=dim, distance=Distance.COSINE)},
                     on_disk_payload=True,
-                )
-            
+                    )
+                    logger.debug(f"dim({dim}), distance(COSINE), on_disk_payload(True)")
+                logger.info("Collection created")
             if USE_RERANKER:
+                logger.info("Init reranker")
                 self.reranker = Reranker()
             else:
+                logger.debug("Not using reranker")
                 self.reranker = None
 
         except Exception as e:
-            pass
+            logger.exception(f"Exception was occure: {e}")
+            raise e
 
     def upsert(self, chunks: List[Chunk]) -> None:
             try:
                 points = []
-
+                logger.debug("Trying to upsert data to db")
                 for chunk in chunks:
                         if SAVE_HYBRID:
                             vector_data = {
@@ -54,7 +68,8 @@ class VectorStorage:
                             }
                         else:
                             vector_data = {"dense": chunk.dense_vector}
-
+                        
+                        logger.debug(f"Adding PointStruct[id={chunk.id}, vector={vector_data}, payload={chunk.payload, chunk.text}]")
                         points.append(
                             PointStruct(
                                 id = chunk.id,
@@ -65,58 +80,81 @@ class VectorStorage:
                                 }
                             )
                         )
-
-                if len(points) > 0:
+                point_quantity = len(points)
+                if point_quantity > 0:
+                    logger.debug(f"Trying to upsert -{point_quantity}- points")
                     self.client.upsert(collection_name=self.collection, points=points)
+                    logger.info(f"Added -{point_quantity}-")
+                    return
+                logger.info("No data to upsert")
             except Exception as e:
-                pass
+                logger.exception(f"Exception occur: {e}")
+                raise e
 
 
+    def search(self, query, query_dense, query_sparse: Optional[SparseVectorData] = None, top_k: int = TOP_K, debug: bool = False) -> List[SearchResult]: #Потестить добавить Matryoshka
+        logger.info("Starting search")
+        try:
+            if USE_HYBRID:
+                if debug:
+                    logger.debug(f"HYBRID, TOP_K={top_k}")
+                    logger.debug(f"Query(dense) - {query_dense}")
+                    logger.debug(f"Query(sparse) - {query_sparse}")
+                response = self.client.query_points(
+                    collection_name= self.collection,
+                    prefetch= [
+                        Prefetch(query=query_dense, using="dense",limit=top_k),
 
-    #добавить score_threshold если к примеру <0.4 то маленькая достоверность если 0.4<=x<=0.7средняя, >7 - высокая  //ЭТО в DEBUG/INFO
-    def search(self, query, query_dense, query_sparse: Optional[SparseVectorData] = None, top_k: int = TOP_K) -> List[SearchResult]: #Потестить добавить Matryoshka  
-        if USE_HYBRID:
-            response = self.client.query_points(
-                collection_name= self.collection,
-                prefetch= [
-                    Prefetch(query=query_dense, using="dense",limit=top_k),
-
-                    Prefetch(query=SparseVector(indices=query_sparse.indices, values=query_sparse.values), using="sparse", limit=top_k)
-                ],
-                query= FusionQuery(
-                    fusion = Fusion.RRF
-                ),
-                with_payload = True,
-                limit= top_k
-            )
-        else:
-            response = self.client.query_points(
-                collection_name = self.collection,
-                query = query_dense,
-                with_payload = True,
-                limit = top_k,
-                using = "dense"
-            )
-        
-        hits = response.points
-        search_result: List[SearchResult] = []
-        for p in hits:
-            payload = getattr(p, "payload", None) or {}
-            text = payload.get("text", "")
-
-            meta = ChunkMetaData(
-                    source=payload.get("source", ""),
-                    author=payload.get("author", list()),
-                    page=payload.get("page", []),
-                    doc_hash=payload.get("doc_hash", "")
+                        Prefetch(query=SparseVector(indices=query_sparse.indices, values=query_sparse.values), using="sparse", limit=top_k)
+                    ],
+                    query= FusionQuery(
+                        fusion = Fusion.RRF
+                    ),
+                    with_payload = True,
+                    limit= top_k
                 )
-            search_result.append(SearchResult(meta=meta, text=text))
+            else:
+                if debug:
+                    logger.debug(f"NON HYBRID, TOP_K={top_k}")
+                    logger.debug(f"Query(dense) - {query_dense}")
+                response = self.client.query_points(
+                    collection_name = self.collection,
+                    query = query_dense,
+                    with_payload = True,
+                    limit = top_k,
+                    using = "dense"
+                )
+            logger.info("Success")
+            
+            logger.debug(f"hits [{response.points}]")
+            hits = response.points
+            search_result: List[SearchResult] = []
+            for p in hits:
+                payload = getattr(p, "payload", None) or {}
+                text = payload.get("text", "")
+                logger.debug(f"payload[{payload}]")
+                meta = ChunkMetaData(
+                        source=payload.get("source", ""),
+                        author=payload.get("author", list()),
+                        page=payload.get("page", []),
+                        doc_hash=payload.get("doc_hash", "")
+                    )
+                logger.debug(f"created metadata[{meta}]")
+                search_result.append(SearchResult(meta=meta, text=text))
 
-        if USE_RERANKER:
-            if self.reranker:
-                search_result = self.reranker.rerank(query, search_result)
+            if USE_RERANKER:
+                logger.info("Reranker working ...")
+                if self.reranker:
+                    search_result = self.reranker.rerank(query, search_result)
+                    logger.info("Success")
 
-        return search_result
-    
+            logger.debug(f"search_result[{search_result}]")
+            return search_result
+        except Exception as e:
+            logger.exception(f"Exception occur: {e}")
+            raise e
+        
     def close(self):
+        logger.info("DB client closing")
         self.client.close()
+        logger.info("Closed")
