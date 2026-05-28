@@ -1,10 +1,11 @@
+import logging
 import uuid
 from typing import List
 from models import Chunk
 from pathlib import Path
 from ..utils import data_normalize
 
-
+logger = logging.getLogger(__name__)
 class Pipeline:
     def __init__(self, chunker, embedder, vector_db) -> None:
         self.chunker = chunker 
@@ -14,11 +15,16 @@ class Pipeline:
     def process(self, data: List[Path]) -> None:
         for doc in data:
             try:
+                logging.info("Data normalize proccess")
                 normalized_data = data_normalize(doc)
-                chunk_data = self.chunker.chunk(normalized_data)
+                logging.info("Success")
 
+                logging.info("Chunking...")
+                chunk_data = self.chunker.chunk(normalized_data)
+                logging.info("Ready")
                 chunk_texts = [chunk_text for chunk_text, _ in chunk_data]
                 vectors = self.embedder.embed(chunk_texts)
+                logging.info("Embedded")
 
                 ready_chunks = []
                 for (chunk_text, chunk_meta), d_vector, sp_vector in zip(chunk_data, vectors["dense"], vectors["sparse"]):

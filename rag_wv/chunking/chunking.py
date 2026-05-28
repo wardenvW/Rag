@@ -4,7 +4,9 @@ from langchain_core.documents import Document
 from typing import Dict, Any, Tuple
 from models import PageSpan
 from config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE
+import logging
 
+logger = logging.getLogger(__name__)
 
 def create_page_mapping(pages: List[Dict[str, Any]]) -> List[PageSpan]:
     current = 0
@@ -60,9 +62,13 @@ class RecursiveSplitter:
                     "doc_hash": doc_hash,
                 }
             )
+            logger.info("Creating page mapping")
             map_list = create_page_mapping(pages)
-
+            logger.info("Created")
+            
+            logger.info("Document splitting")
             chunks = self._splitter.split_documents([doc])
+            logger.info("Ready")
 
             for c in chunks:
                 chunk_start = c.metadata.get("start_index", None)
@@ -80,8 +86,8 @@ class RecursiveSplitter:
             return results
 
         except Exception as e:
-            print(e)
-            raise
+            logger.exception(f"Exception occur: {e}")
+            raise e
 
 
 ###
