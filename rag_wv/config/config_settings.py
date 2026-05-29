@@ -54,3 +54,9 @@ def init_logging() -> None:
             logging.FileHandler(filename=BASE_DIR / "app.log", encoding="utf-8")
         ],
     )
+    logging.getLogger("httpx").setLevel(logging.ERROR)
+    logging.getLogger("httpcore.http11").setLevel(logging.ERROR)
+    logging.getLogger("httpcore.connection").setLevel(logging.ERROR)
+    logging.getLogger("sentence_transformers.base.model").setLevel(logging.ERROR)
+    logging.getLogger("FlagEmbedding.finetune.embedder.encoder_only.m3.runner").setLevel(logging.ERROR)
+    logging.getLogger("huggingface_hub.utils._http").setLevel(logging.ERROR)

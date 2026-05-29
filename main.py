@@ -1,4 +1,4 @@
-from rag_wv import Pipeline, RecursiveSplitter, Embedder, VectorStorage
+from rag_wv import Pipeline, RecursiveSplitter, Embedder, VectorStorage, init_logging
 from sentence_transformers import SentenceTransformer
 import pathlib
 from google import genai
@@ -8,12 +8,13 @@ import os
 from dotenv import load_dotenv
 
 
-
 #model = SentenceTransformer("BAAI/bge-m3")
 #model.save("./model")
 #print(model.get_embedding_dimension())
 
+
 load_dotenv()
+init_logging()
 
 API_KEY = os.getenv("API_KEY")
 client = genai.Client(api_key=API_KEY)
@@ -23,23 +24,22 @@ time_start = time.time()
 
 
 embedder = Embedder()
-db = VectorStorage(collection_name="docs")
+db = VectorStorage()
 
 start1 = time.time()
 
 ppl = Pipeline(chunker=RecursiveSplitter(chunk_size=2500), embedder=embedder, vector_db=db)
-#ppl.process(["/home/warden/rag/УК_РБ-1-150.pdf"])
+ppl.process(["/home/warden/rag/documents/УК_РБ.pdf"])
 
 def start():
     start_2 = time.time()
-    query = "Что будет если корпоративную сеть, выкачать оттуда коммерческую тайну и продать в даркнете?"
-    query_vector = embedder.embed([query])[0]
+    query = "?"
+    query_vector = embedder.embed([query])
 
-    results = db.search(query_vector)
-    #изменить логику т.к db.search возвращает другой тип данных теперь
+    results = db.search(query, query_vector["dense"], query_vector["sparse"], debug=True)
     context = "\n\n".join(
-    f"[{m.source} | Возможные страницы: {m.page}]\n{text}"
-    for m, text in zip(results.meta, results.text)
+    f"[{obj.meta.source} | Возможные страницы: {obj.meta.page}]\n{obj.text}"
+    for obj in results
     )
 
     prompt = f"""
@@ -65,10 +65,11 @@ def start():
         contents=prompt,
         config=types.GenerateContentConfig(
             system_instruction=f"""
+            Ты профессиональный юрист.
             Отвечай только по предоставленному контексту.
             Если ответа в контексте нет — скажи об этом.
             Указывай все возможные страницы, где упоминается контекст.
-            Если вопрос стоит общий, то выдавай сразу всю статью/часть.
+            Если вопрос стоит общий, то выдавай сразу всю статью и подходящие части.
             """,
             temperature=0.5,
         )
@@ -79,9 +80,7 @@ def start():
     print(response.text)
     print(f"Ответ дан за {(time.time() - time_start):.2f} секунд")
     print(f"LLM работала {(time.time() - start_2):.2f}")
-#print(f"Сохранил за {(time.time() - start1):.2f}")
+print(f"Сохранил за {(time.time() - start1):.2f}")
+start()
 db.close()
 
-
-a = pathlib.PurePath(__file__)
-print(a)

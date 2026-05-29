@@ -1,7 +1,7 @@
 import logging
 import uuid
 from typing import List
-from models import Chunk
+from ..models import Chunk
 from pathlib import Path
 from ..utils import data_normalize
 
@@ -23,6 +23,7 @@ class Pipeline:
                 chunk_data = self.chunker.chunk(normalized_data)
                 logging.info("Ready")
                 chunk_texts = [chunk_text for chunk_text, _ in chunk_data]
+                logging.info("Starting embedding")
                 vectors = self.embedder.embed(chunk_texts)
                 logging.info("Embedded")
 

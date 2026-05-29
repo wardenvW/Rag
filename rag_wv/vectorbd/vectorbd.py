@@ -45,6 +45,7 @@ class VectorStorage:
                     )
                     logger.debug(f"dim({dim}), distance(COSINE), on_disk_payload(True)")
                 logger.info("Collection created")
+            logger.info(f"Collection created: {self.client.get_collection(self.collection)}")
             if USE_RERANKER:
                 logger.info("Init reranker")
                 self.reranker = Reranker()

@@ -2,8 +2,8 @@ from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from typing import Dict, Any, Tuple
-from models import PageSpan
-from config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE
+from ..models import PageSpan
+from ..config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE
 import logging
 
 logger = logging.getLogger(__name__)

@@ -35,7 +35,6 @@ def get_doc_hash(document) -> str:
 def data_normalize(document) -> Dict[str, Any]:    
     try:
         pages = pymupdf4llm.to_text(document, ocr_language = "rus+eng", page_chunks = True)
-        print(pages)
         pages_data = [
             {
                 "page": page["metadata"]["page_number"], 
