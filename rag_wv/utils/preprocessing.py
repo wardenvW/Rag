@@ -1,8 +1,11 @@
 import re
 import pymupdf4llm
+import logging
 from typing import List, Dict, Any
 from hashlib import file_digest
 from pathlib import PurePath
+
+logger = logging.getLogger(__name__)
 
 def extract_author(text: str) -> List[str]:
     pattern = r'[А-ЯЁ][а-яё]+\s[А-ЯЁ]\.[А-ЯЁ]\.|[А-ЯЁ]\.[А-ЯЁ]\.\s[А-ЯЁ][а-яё]+'
@@ -63,5 +66,5 @@ def data_normalize(document) -> Dict[str, Any]:
 
         return data
     except Exception as e:
-        print(e)
-        raise
+        logger.exception(f"Exception occur: {e}")
+        raise e

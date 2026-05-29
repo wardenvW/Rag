@@ -16,7 +16,7 @@ class Embedder:
             if 'lexical_weights' in encode_result:
                 sparse_list = [SparseVectorData(indices = [int(k) for k in chunk_weights.keys()], values = [float(v) for v in chunk_weights.values()]) for chunk_weights in encode_result["lexical_weights"]]
             
-            result = {"dense": encode_result["dense_vecs"].tolist()[0], "sparse": sparse_list[0]}
+            result = {"dense": encode_result["dense_vecs"].tolist(), "sparse": sparse_list}
             return result
         except Exception as e:
             pass

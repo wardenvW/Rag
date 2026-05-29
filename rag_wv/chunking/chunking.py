@@ -37,8 +37,8 @@ def get_chunk_pages(chunk_start: int, chunk_end: int, mapping_list: List[PageSpa
 ##
 #
 class RecursiveSplitter:
-    def __init__(self, chunk_size: int = 2500, separators: List[str] = ["\n\n", "\n", ". ", " ", ""]):
-        self._splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(separators=separators, chunk_size=chunk_size, add_start_index=True, chunk_overlap = 0)
+    def __init__(self, chunk_size: int = DEFAULT_CHUNK_SIZE, chunk_overlap: int = DEFAULT_CHUNK_OVERLAP, separators: List[str] = ["\n\n", "\n", ". ", " ", ""]):
+        self._splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(separators=separators, chunk_size=chunk_size, add_start_index=True, chunk_overlap = chunk_overlap)
         self._chunk_size: int = chunk_size
     
     def chunk(self, data: Dict[str, Any]) -> List[Tuple[str, Dict]]:

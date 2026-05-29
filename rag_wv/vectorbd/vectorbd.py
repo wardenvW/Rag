@@ -104,9 +104,9 @@ class VectorStorage:
                 response = self.client.query_points(
                     collection_name= self.collection,
                     prefetch= [
-                        Prefetch(query=query_dense, using="dense",limit=top_k),
+                        Prefetch(query=query_dense[0], using="dense",limit=top_k),
 
-                        Prefetch(query=SparseVector(indices=query_sparse.indices, values=query_sparse.values), using="sparse", limit=top_k)
+                        Prefetch(query=SparseVector(indices=query_sparse[0].indices, values=query_sparse[0].values), using="sparse", limit=top_k)
                     ],
                     query= FusionQuery(
                         fusion = Fusion.RRF
@@ -120,7 +120,7 @@ class VectorStorage:
                     logger.debug(f"Query(dense) - {query_dense}")
                 response = self.client.query_points(
                     collection_name = self.collection,
-                    query = query_dense,
+                    query = query_dense[0],
                     with_payload = True,
                     limit = top_k,
                     using = "dense"
