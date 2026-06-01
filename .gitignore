@@ -1,6 +1,6 @@
 *.env
 model/
-vector_bd/
+qdrant_path/
 venv/
 *.pyd
 

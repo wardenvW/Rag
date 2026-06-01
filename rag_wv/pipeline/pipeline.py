@@ -15,17 +15,17 @@ class Pipeline:
     def process(self, data: List[Path]) -> None:
         for doc in data:
             try:
-                logging.info("Data normalize proccess")
+                logger.info("Data normalize proccess")
                 normalized_data = data_normalize(doc)
-                logging.info("Success")
+                logger.info("Success")
 
-                logging.info("Chunking...")
+                logger.info("Chunking...")
                 chunk_data = self.chunker.chunk(normalized_data)
-                logging.info("Ready")
+                logger.info("Ready")
                 chunk_texts = [chunk_text for chunk_text, _ in chunk_data]
-                logging.info("Starting embedding")
+                logger.info("Starting embedding")
                 vectors = self.embedder.embed(chunk_texts)
-                logging.info("Embedded")
+                logger.info("Embedded")
 
                 ready_chunks = []
                 for (chunk_text, chunk_meta), d_vector, sp_vector in zip(chunk_data, vectors["dense"], vectors["sparse"]):
@@ -37,6 +37,6 @@ class Pipeline:
 
                 self.vector_db.upsert(ready_chunks)
             except Exception as e:
-                print(e)
-                raise
+                logger.exception(f"Exception occur: {e}")
+                raise e
 #sudo apt install tesseract-ocr tesseract-ocr-rus tesseract-ocr-eng В ОБЯЗАТЕЛЬНОМ ПОРЯДКЕ, чтобы установился движок OCR занимающийся распознаванием трудного текста, таблиц и тд
