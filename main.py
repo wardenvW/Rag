@@ -10,10 +10,10 @@ from contextlib import asynccontextmanager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
-    app.state.chunker = ResourceWarning()
+    app.state.chunker = RecursiveSplitter()
     app.state.embedder = Embedder()
-    app.state.vector_bd = VectorStorage()
-    app.state.pipeline = Pipeline(chunker= app.state.chunker, embedder= app.state.embedder, vector_bd= app.state.vector_bd)
+    app.state.vector_db = VectorStorage()
+    app.state.pipeline = Pipeline(chunker = app.state.chunker, embedder = app.state.embedder, vector_db = app.state.vector_db)
     #loading Models
     #...
     yield

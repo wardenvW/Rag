@@ -34,8 +34,12 @@ def clean_pdf_text(text: str) -> str:
     
     return text.strip()
 
-def get_doc_hash(file: UploadFile) -> str:
-    digest = file_digest(file.file, "sha256")
+def get_doc_hash(file_obj) -> str:
+    if hasattr(file_obj, "read"):
+        digest = file_digest(file_obj, "sha256")
+    elif isinstance(file_obj, str):
+        with open(file_obj, "rb") as f:
+            digest = file_digest(f, "sha256")
     return digest.hexdigest()
 
 def data_normalize(document) -> Dict[str, Any]:    
@@ -80,3 +84,8 @@ def save_to_local(file: UploadFile, doc_hash: str):
         shutil.copyfileobj(file.file, f)
     
     return file_path
+
+def remove_local_file(filename: str):
+    filepath = os.path.join(DOCUMENTS_PATH, filename)
+    if os.path.exists(filepath):
+        os.remove(filepath)

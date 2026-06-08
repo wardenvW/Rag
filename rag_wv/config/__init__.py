@@ -7,7 +7,7 @@ from .config_settings import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_BATCH_SIZE,
     API_KEY,
-    ALLOWED_FILE_TYPES,
+    ALLOWED_FILE_EXTENSIONS,
     EMB_MODEL_NAME,
     USE_HYBRID,
     TOP_K,

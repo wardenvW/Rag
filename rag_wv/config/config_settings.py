@@ -37,7 +37,7 @@ TOP_N: int = 25
 API_KEY: str = os.getenv("API_KEY")
 
 # --- Разрешённые типы файлов ---
-ALLOWED_FILE_TYPES: List[str] = [".pdf", ".doc", ".docx", ...]
+ALLOWED_FILE_EXTENSIONS: List[str] = [".pdf", ".doc", ".docx", ...]
 
 # --- Логгирование ---
 LOG_LEVEL = logging.DEBUG
