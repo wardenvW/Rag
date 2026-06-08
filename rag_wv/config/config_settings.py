@@ -19,6 +19,7 @@ USE_HYBRID: bool = True
 # --- Параметры векторной БД (Qdrant) ---
 QDRANT_PATH: str = BASE_DIR / os.getenv("QDRANT_PATH")
 QDRANT_URL: str = os.getenv("QDRANT_URL")
+DOCUMENTS_PATH: str = BASE_DIR / "documents"
 COLLECTION_NAME: str = "docs"
 VECTOR_DIM: int = 1024
 TOP_K: int = 50

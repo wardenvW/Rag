@@ -39,4 +39,5 @@ class Pipeline:
             except Exception as e:
                 logger.exception(f"Exception occur: {e}")
                 raise e
+            
 #sudo apt install tesseract-ocr tesseract-ocr-rus tesseract-ocr-eng В ОБЯЗАТЕЛЬНОМ ПОРЯДКЕ, чтобы установился движок OCR занимающийся распознаванием трудного текста, таблиц и тд

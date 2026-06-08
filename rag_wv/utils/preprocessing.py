@@ -1,9 +1,13 @@
 import re
 import pymupdf4llm
 import logging
+import shutil
+import os
 from typing import List, Dict, Any
 from hashlib import file_digest
 from pathlib import PurePath
+from fastapi import UploadFile
+from ..config import DOCUMENTS_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +34,8 @@ def clean_pdf_text(text: str) -> str:
     
     return text.strip()
 
-def get_doc_hash(document) -> str:
-    with open(document, 'rb') as f:
-        digest = file_digest(f, "sha256")
+def get_doc_hash(file: UploadFile) -> str:
+    digest = file_digest(file.file, "sha256")
     return digest.hexdigest()
 
 def data_normalize(document) -> Dict[str, Any]:    
@@ -68,3 +71,12 @@ def data_normalize(document) -> Dict[str, Any]:
     except Exception as e:
         logger.exception(f"Exception occur: {e}")
         raise e
+
+def save_to_local(file: UploadFile, doc_hash: str):
+    os.makedirs(DOCUMENTS_PATH, exist_ok=True)
+    file_name = f"{doc_hash}_{file.filename}"
+    file_path = os.path.join(DOCUMENTS_PATH, file_name)
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    
+    return file_path

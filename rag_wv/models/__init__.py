@@ -4,4 +4,7 @@ from .models import (
     PageSpan,
     SearchResult,
     SparseVectorData,
+    DocumentNode,
+    DocumentResponse,
+    DeleteResponse
 )

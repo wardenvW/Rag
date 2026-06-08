@@ -50,7 +50,7 @@ def start():
     {query}
     """
 
-    response = client.models.generate_content(
+    response_stream = client.models.generate_content_stream(
         model="gemma-4-31b-it",
         contents=prompt,
         config=types.GenerateContentConfig(
@@ -69,7 +69,7 @@ def start():
 
 
 
-    print(response.text)
+    print(response_stream)
     print(f"Ответ дан за {(time.time() - time_start):.2f} секунд")
     print(f"LLM работала {(time.time() - start_2):.2f}")
 print(f"Сохранил за {(time.time() - start1):.2f}")

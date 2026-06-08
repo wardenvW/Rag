@@ -15,5 +15,7 @@ from .config_settings import (
     USE_RERANKER,
     RERANKER_NAME,
     TOP_N,
+    DOCUMENTS_PATH,
     init_logging,
+
 )
