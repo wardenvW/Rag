@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from rag_wv.api.routers import document_router, chat_router
 from rag_wv.api.internal import admin_router
 from rag_wv import Pipeline, RecursiveSplitter, Embedder, VectorStorage, init_logging
@@ -23,7 +25,9 @@ app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://127.0.0.1:8000",
-    "http://127.0.0.1:3000" #<-- Здесь React
+    "http://localhost:8000",
+    "http://127.0.0.1:5173", #<-- Здесь React
+    "http://localhost:5173"
 ]
 
 app.add_middleware(
@@ -37,3 +41,9 @@ app.add_middleware(
 app.include_router(document_router, prefix="/documents", tags=['docs'])
 app.include_router(chat_router, prefix='/chat', tags=['chat'])
 app.include_router(admin_router, prefix='/admin', tags=['admin'])
+
+app.mount("/static", StaticFiles(directory="frontend/dist/assets"), name="assets")
+
+@app.get("/{rest_of_path:path}")
+async def serve_spa(rest_of_path: str):
+    return FileResponse("frontend/dist/index.html")

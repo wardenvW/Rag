@@ -4,7 +4,7 @@ import shutil
 import os
 from typing import List, Dict, Any
 from hashlib import file_digest
-from pathlib import PurePath
+from pathlib import PurePath, Path
 from fastapi import UploadFile
 from ..config import DOCUMENTS_PATH
 from .handlers import get_handler
@@ -35,9 +35,13 @@ def clean_pdf_text(text: str) -> str:
     return text.strip()
 
 def get_doc_hash(file_obj) -> str:
+    logger.debug(f"В хэш функцию был передан параметр с типом [{type(file_obj)}]")
     if hasattr(file_obj, "read"):
         digest = file_digest(file_obj, "sha256")
     elif isinstance(file_obj, str):
+        with open(file_obj, "rb") as f:
+            digest = file_digest(f, "sha256")
+    elif isinstance(file_obj, Path):
         with open(file_obj, "rb") as f:
             digest = file_digest(f, "sha256")
     return digest.hexdigest()

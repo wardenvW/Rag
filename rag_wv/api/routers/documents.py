@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, Depends, HTTPException, BackgroundTasks, Request
+from fastapi import APIRouter, UploadFile, Depends, HTTPException, BackgroundTasks, Request, Form, File
 from sqlalchemy.orm import Session
 from qdrant_client.http import models
 from ...db.database import get_session
@@ -30,7 +30,7 @@ def read_document(doc_id: str, session: Session = Depends(get_session)):
     return doc
 
 @document_router.post("/upload", response_model=DocumentResponse, status_code=201)
-def upload_document(file: UploadFile, background_tasks: BackgroundTasks,  ppl: Pipeline = Depends(get_pipeline), session: Session = Depends(get_session)):
+def upload_document(background_tasks: BackgroundTasks, file: UploadFile = File(...), file_type: str = Form(...), ppl: Pipeline = Depends(get_pipeline), session: Session = Depends(get_session)):
     file_extension = Path(file.filename).suffix
     if file_extension not in ALLOWED_FILE_EXTENSIONS:
         raise HTTPException(status_code=415, detail="Not allowed document extension")
@@ -43,8 +43,8 @@ def upload_document(file: UploadFile, background_tasks: BackgroundTasks,  ppl: P
     file.file.seek(0)
     doc_path = save_to_local(file, doc_hash)
     file.file.seek(0)
-    doc = DocumentNode(id=doc_hash, filename=file.filename, filesize=file.size)
-    background_tasks.add_task(ppl.process, [Path(doc_path)])
+    doc = DocumentNode(id=doc_hash, filename=file.filename, filesize=file.size, doc_type=file_type)
+    background_tasks.add_task(ppl.process, [Path(doc_path)], file_type)
     
     return add_document(session, doc)
         

@@ -95,18 +95,19 @@ class VectorStorage:
     def search(self, used_documents: List[str], query, query_dense, query_sparse: Optional[SparseVectorData] = None, top_k: int = TOP_K, debug: bool = False) -> List[SearchResult]:
         logger.info("Starting search")
         try:
-            query_filter = None
-            if used_documents:
-                query_filter = Filter(
-                    must = [
-                        FieldCondition(
-                            key="doc_hash",
-                            match=MatchAny(any=used_documents)
-                        )
-                    ]
-                )
-                if debug:
-                    logger.debug(f"Applied filter for docs: {query_filter}")
+            if not used_documents:
+                return []
+
+            query_filter = Filter(
+                must = [
+                    FieldCondition(
+                        key="doc_hash",
+                        match=MatchAny(any=[doc.id for doc in used_documents])
+                    )
+                ]
+            )
+            if debug:
+                logger.debug(f"Applied filter for docs: {query_filter}")
 
 
             if USE_HYBRID:
@@ -154,7 +155,8 @@ class VectorStorage:
                         source=payload.get("source", ""),
                         author=payload.get("author", list()),
                         page=payload.get("page", []),
-                        doc_hash=payload.get("doc_hash", "")
+                        doc_hash=payload.get("doc_hash", ""),
+                        type=payload.get("type", "other")
                     )
                 logger.debug(f"created metadata[{meta}]")
                 search_result.append(SearchResult(meta=meta, text=text))
