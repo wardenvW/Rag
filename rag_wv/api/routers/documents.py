@@ -44,7 +44,7 @@ def upload_document(file: UploadFile, background_tasks: BackgroundTasks,  ppl: P
     doc_path = save_to_local(file, doc_hash)
     file.file.seek(0)
     doc = DocumentNode(id=doc_hash, filename=file.filename, filesize=file.size)
-    background_tasks.add_task(ppl.process, [doc_path])
+    background_tasks.add_task(ppl.process, [Path(doc_path)])
     
     return add_document(session, doc)
         

@@ -47,6 +47,7 @@ class RecursiveSplitter:
             author = data["payload"]["author"]
             source = data["payload"]["source"]
             doc_hash = data["payload"]["doc_hash"]
+            doc_type = data["payload"]["type"]
 
             results = []
             full_text = ""
@@ -60,6 +61,7 @@ class RecursiveSplitter:
                     "source": source,
                     "author": author,
                     "doc_hash": doc_hash,
+                    "type": doc_type,
                 }
             )
             logger.info("Creating page mapping")

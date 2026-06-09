@@ -26,6 +26,7 @@ class ChunkMetaData:
     author: List[str]
     page: List[int]
     doc_hash: str
+    type: str
 
 class Chunk:
     def __init__(self, text: str, dense_vector: List[float], sparse_vector: Optional[SparseVectorData], payload: Dict[str, Any], id: str)-> None:
@@ -50,6 +51,7 @@ class SearchResult:
                 "author": self.meta.author,
                 "pages": self.meta.page,
                 "doc_hash": self.meta.doc_hash,
+                "type": self.meta.type,
                 "text": self.text[:100] + "...",
                 "score": self.score
             }, ensure_ascii=False, indent=2)
@@ -80,11 +82,15 @@ class SearchResultResponse(BaseModel):
             text=result.text,
             score=result.score
         )
+    
+class QueryRequest(BaseModel):
+    query: str
 
 class DocumentType(str, Enum):
     LEGAL = "legal"
     TECH = "tech"
     FINANCE = "finance"
+    CRIMINALIST = "criminalist"
     OTHER = "other"
 
 class DocumentStatus(str, Enum):

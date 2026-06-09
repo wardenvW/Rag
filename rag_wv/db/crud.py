@@ -7,7 +7,6 @@ from ..models import DocumentNode
 def get_all_documents(db: Session):
     return db.scalars(select(DocumentNode)).all()
 
-
 def get_document(db: Session, id: str):
     return db.scalar(select(DocumentNode).where(DocumentNode.id == id))
 
@@ -19,13 +18,11 @@ def toggle_document(db: Session, id: str):
     db.commit()
     return document
     
-
 def add_document(db: Session, document: DocumentNode):
     db.add(document)
     db.commit()
     return document
     
-
 def delete_document(db: Session, id: str):
     stmt = delete(DocumentNode).where(DocumentNode.id == id)
     db.execute(stmt)

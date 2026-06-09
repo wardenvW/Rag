@@ -1,1 +1,2 @@
 from .preprocessing import extract_author, clean_pdf_text, get_doc_hash, data_normalize, save_to_local, remove_local_file
+from .handlers import get_handler

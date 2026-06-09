@@ -1,16 +1,25 @@
 import logging
 import uuid
-from typing import List
-from ..models import Chunk
+import os
+from dotenv import load_dotenv
+from google.genai import Client, types
 from pathlib import Path
+from typing import List, Iterator
+from ..models import Chunk
 from ..utils import data_normalize
+from ..prompt import build_prompt, build_promptv2
 
 logger = logging.getLogger(__name__)
+
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
+
 class Pipeline:
     def __init__(self, chunker, embedder, vector_db) -> None:
         self.chunker = chunker 
         self.embedder = embedder
-        self.vector_db = vector_db 
+        self.vector_db = vector_db
+        self.llm = Client(api_key=API_KEY)
 
     def process(self, data: List[Path]) -> None:
         for doc in data:
@@ -18,10 +27,11 @@ class Pipeline:
                 logger.info("Data normalize proccess")
                 normalized_data = data_normalize(doc)
                 logger.info("Success")
-
+                
                 logger.info("Chunking...")
                 chunk_data = self.chunker.chunk(normalized_data)
                 logger.info("Ready")
+                
                 chunk_texts = [chunk_text for chunk_text, _ in chunk_data]
                 logger.info("Starting embedding")
                 vectors = self.embedder.embed(chunk_texts)
@@ -40,4 +50,16 @@ class Pipeline:
                 logger.exception(f"Exception occur: {e}")
                 raise e
             
-#sudo apt install tesseract-ocr tesseract-ocr-rus tesseract-ocr-eng В ОБЯЗАТЕЛЬНОМ ПОРЯДКЕ, чтобы установился движок OCR занимающийся распознаванием трудного текста, таблиц и тд
+    def stream_answer(self, query: str, used_documents: List[str]) -> Iterator:
+        query_vector = self.embedder.embed([query])
+        results = self.vector_db.search(used_documents, query, query_vector["dense"], query_vector["sparse"], debug=True)
+
+        context = "\n\n".join(f"[{obj.meta.source} | Возможные страницы: {obj.meta.page}]\n{obj.text}" for obj in results)
+        persona_keys = {obj.meta.type for obj in results}
+
+        instruction, prompt = build_promptv2(context=context, query=query, persona_key=persona_keys)
+
+
+
+        for chunk in self.llm.models.generate_content_stream(model="gemma-4-31b-it", contents=prompt, config=types.GenerateContentConfig(system_instruction=instruction, temperature=0.5)):
+            yield chunk.text

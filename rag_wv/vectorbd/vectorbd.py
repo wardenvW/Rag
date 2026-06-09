@@ -1,5 +1,5 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance, PointStruct, SparseVectorParams, SparseVector, Prefetch, FusionQuery, Fusion
+from qdrant_client.models import VectorParams, Distance, PointStruct, SparseVectorParams, SparseVector, Prefetch, FusionQuery, Fusion, Filter, FieldCondition, MatchAny
 from typing import List, Optional
 from ..models import Chunk, ChunkMetaData, SearchResult, SparseVectorData
 from ..config import QDRANT_PATH, QDRANT_URL, COLLECTION_NAME, VECTOR_DIM, USE_HYBRID, TOP_K, SAVE_HYBRID, USE_RERANKER
@@ -8,11 +8,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 class VectorStorage:
-    def __init__(self, path: str = QDRANT_PATH, url: str = QDRANT_URL, dim: int = VECTOR_DIM, in_memory: bool = True) -> None:
+    def __init__(self, path: str = QDRANT_PATH, url: str = QDRANT_URL, dim: int = VECTOR_DIM, on_disk: bool = True) -> None:
         self.collection = COLLECTION_NAME
 
         try:   
-            if in_memory:
+            if on_disk:
                 logger.info("Initialize local(in-memory) Qdrant client")
                 self.client: QdrantClient = QdrantClient(path=path)
                 logger.info("Success")
@@ -44,8 +44,7 @@ class VectorStorage:
                     on_disk_payload=True,
                     )
                     logger.debug(f"dim({dim}), distance(COSINE), on_disk_payload(True)")
-                logger.info("Collection created")
-            logger.info(f"Collection created: {self.client.get_collection(self.collection)}")
+                logger.info(f"Collection created: {self.client.get_collection(self.collection)}")
             if USE_RERANKER:
                 logger.info("Init reranker")
                 self.reranker = Reranker()
@@ -93,14 +92,29 @@ class VectorStorage:
                 raise e
 
 
-    def search(self, query, query_dense, query_sparse: Optional[SparseVectorData] = None, top_k: int = TOP_K, debug: bool = False) -> List[SearchResult]: #Потестить добавить Matryoshka
+    def search(self, used_documents: List[str], query, query_dense, query_sparse: Optional[SparseVectorData] = None, top_k: int = TOP_K, debug: bool = False) -> List[SearchResult]:
         logger.info("Starting search")
         try:
+            query_filter = None
+            if used_documents:
+                query_filter = Filter(
+                    must = [
+                        FieldCondition(
+                            key="doc_hash",
+                            match=MatchAny(any=used_documents)
+                        )
+                    ]
+                )
+                if debug:
+                    logger.debug(f"Applied filter for docs: {query_filter}")
+
+
             if USE_HYBRID:
                 if debug:
                     logger.debug(f"HYBRID, TOP_K={top_k}")
                     logger.debug(f"Query(dense) - {query_dense}")
                     logger.debug(f"Query(sparse) - {query_sparse}")
+
                 response = self.client.query_points(
                     collection_name= self.collection,
                     prefetch= [
@@ -111,6 +125,7 @@ class VectorStorage:
                     query= FusionQuery(
                         fusion = Fusion.RRF
                     ),
+                    query_filter=query_filter,
                     with_payload = True,
                     limit= top_k
                 )
@@ -121,6 +136,7 @@ class VectorStorage:
                 response = self.client.query_points(
                     collection_name = self.collection,
                     query = query_dense[0],
+                    query_filter=query_filter,
                     with_payload = True,
                     limit = top_k,
                     using = "dense"

@@ -1,5 +1,4 @@
 import re
-import pymupdf4llm
 import logging
 import shutil
 import os
@@ -8,6 +7,7 @@ from hashlib import file_digest
 from pathlib import PurePath
 from fastapi import UploadFile
 from ..config import DOCUMENTS_PATH
+from .handlers import get_handler
 
 logger = logging.getLogger(__name__)
 
@@ -42,21 +42,16 @@ def get_doc_hash(file_obj) -> str:
             digest = file_digest(f, "sha256")
     return digest.hexdigest()
 
-def data_normalize(document) -> Dict[str, Any]:    
+def data_normalize(document, d_type) -> Dict[str, Any]:    
     try:
-        pages = pymupdf4llm.to_text(document, ocr_language = "rus+eng", page_chunks = True)
-        pages_data = [
-            {
-                "page": page["metadata"]["page_number"], 
-                "text": clean_pdf_text(page["text"]),       
-            } 
-            for page in pages
-        ]
+        extension = PurePath(document).suffix
+        handler = get_handler(extension)
+        extracted_data = handler(document)
 
         source = PurePath(document).name
         
-        author_pages = [0, 1, -1, -2] if len(pages_data) > 4 else [0, -1]
-        author_mentioned_pages = " ".join(pages_data[page]["text"] for page in author_pages)
+        author_pages = [0, 1, -1, -2] if len(extracted_data) > 4 else [0, -1]
+        author_mentioned_pages = " ".join(extracted_data[page]["text"] for page in author_pages)
 
         author = extract_author(author_mentioned_pages)
 
@@ -66,8 +61,9 @@ def data_normalize(document) -> Dict[str, Any]:
             "payload": {
                 "source": source,
                 "author": author,
-                "pages": pages_data,
+                "pages": extracted_data,
                 "doc_hash": d_hash,
+                "type": d_type
             },
         }
 

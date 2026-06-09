@@ -6,5 +6,7 @@ from .models import (
     SparseVectorData,
     DocumentNode,
     DocumentResponse,
-    DeleteResponse
+    DeleteResponse,
+    DocumentType,
+    QueryRequest
 )
