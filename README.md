@@ -3,4 +3,5 @@
 # Plans:
 # 1. Add specific document type chunking settings
 # 2. Finish logging
-# 3. ...
+# 3. Admin router
+# 4. Frontend (React)
