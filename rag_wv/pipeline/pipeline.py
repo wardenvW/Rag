@@ -28,9 +28,13 @@ class Pipeline:
                 normalized_data = data_normalize(doc, d_type)
                 logger.info("Success")
                 
+                logger.info("Setting chunking params")
+                self.chunker.change_chunk_params(d_type)
+                logger.info("Updated")
+
                 logger.info("Chunking...")
                 chunk_data = self.chunker.chunk(normalized_data)
-                logger.info("Ready")
+                logger.info("Document chunked into %d pieces", len(chunk_data))
                 
                 chunk_texts = [chunk_text for chunk_text, _ in chunk_data]
                 logger.info("Starting embedding")
@@ -47,17 +51,20 @@ class Pipeline:
 
                 self.vector_db.upsert(ready_chunks)
             except Exception as e:
-                logger.exception(f"Exception occur: {e}")
-                raise e
+                logger.error("Failed to process document %s: %s", doc.name, str(e), exc_info=True)
+                continue
             
     def stream_answer(self, query: str, used_documents: List[str]) -> Iterator:
+        logger.info("Starting answer streaming...")
         query_vector = self.embedder.embed([query])
         results = self.vector_db.search(used_documents, query, query_vector["dense"], query_vector["sparse"], debug=True)
         if results:
             context = "\n\n".join(f"[{obj.meta.source} | Возможные страницы: {obj.meta.page}]\n{obj.text}" for obj in results)
             persona_keys = {obj.meta.type for obj in results}
 
+            logger.info("Building prompt")
             instruction, prompt = build_promptv2(context=context, query=query, persona_key=persona_keys)
+            logger.debug(f"Prompt builded: {prompt}")
 
             for chunk in self.llm.models.generate_content_stream(model="gemma-4-31b-it", contents=prompt, config=types.GenerateContentConfig(system_instruction=instruction, temperature=0.5)):
                 yield chunk.text
@@ -69,4 +76,5 @@ class Pipeline:
 
 
             for chunk in self.llm.models.generate_content_stream(model="gemma-4-31b-it", contents=prompt, config=types.GenerateContentConfig(system_instruction=instruction, temperature=0.5)):
+                logger.debug(f"Generated chunk: {chunk.text}")
                 yield chunk.text

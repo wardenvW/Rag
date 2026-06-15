@@ -7,8 +7,10 @@ from rag_wv.api.internal import admin_router
 from rag_wv import Pipeline, RecursiveSplitter, Embedder, VectorStorage, init_logging
 from rag_wv.db import Base, engine
 from contextlib import asynccontextmanager
+import logging
 
 init_logging()
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,6 +22,7 @@ async def lifespan(app: FastAPI):
     yield
     app.state.vector_db.close()
 
+logger.info("Starting app")
 app = FastAPI(lifespan=lifespan)
 
 

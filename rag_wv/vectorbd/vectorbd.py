@@ -1,7 +1,7 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct, SparseVectorParams, SparseVector, Prefetch, FusionQuery, Fusion, Filter, FieldCondition, MatchAny
 from typing import List, Optional
-from ..models import Chunk, ChunkMetaData, SearchResult, SparseVectorData
+from ..models import Chunk, ChunkMetaData, SearchResult, SparseVectorData, DocumentNode
 from ..config import QDRANT_PATH, QDRANT_URL, COLLECTION_NAME, VECTOR_DIM, USE_HYBRID, TOP_K, SAVE_HYBRID, USE_RERANKER
 from ..reranker import Reranker
 import logging
@@ -13,7 +13,7 @@ class VectorStorage:
 
         try:   
             if on_disk:
-                logger.info("Initialize local(in-memory) Qdrant client")
+                logger.info("Initialize local(on_disk) Qdrant client")
                 self.client: QdrantClient = QdrantClient(path=path)
                 logger.info("Success")
             else:
@@ -22,9 +22,9 @@ class VectorStorage:
                 logger.info("Success")
                 
             if not self.client.collection_exists(self.collection):
-                logger.debug("Creating new collection")
+                logger.debug(f"Creating new collection - {self.collection}")
+                logger.debug(f"option SAVE_HYBRID[{SAVE_HYBRID}]")
                 if SAVE_HYBRID:
-                    logger.debug("option SAVE_HYBRID - True")
                     self.client.create_collection(
                         collection_name=self.collection,
                         vectors_config={
@@ -37,7 +37,6 @@ class VectorStorage:
                     )
                     logger.debug(f"dim({dim}), distance(COSINE), on_disk_payload(True)")
                 else:
-                    logger.debug("option SAVE_HYBRID - False")
                     self.client.create_collection(
                     collection_name=self.collection,
                     vectors_config = {"dense": VectorParams(size=dim, distance=Distance.COSINE)},
@@ -48,8 +47,9 @@ class VectorStorage:
             if USE_RERANKER:
                 logger.info("Init reranker")
                 self.reranker = Reranker()
+                logger.info("Success")
             else:
-                logger.debug("Not using reranker")
+                logger.info("Not using reranker")
                 self.reranker = None
 
         except Exception as e:
@@ -59,7 +59,7 @@ class VectorStorage:
     def upsert(self, chunks: List[Chunk]) -> None:
             try:
                 points = []
-                logger.debug("Trying to upsert data to db")
+                logger.info("Trying to upsert data to db")
                 for chunk in chunks:
                         if SAVE_HYBRID:
                             vector_data = {
@@ -82,7 +82,7 @@ class VectorStorage:
                         )
                 point_quantity = len(points)
                 if point_quantity > 0:
-                    logger.debug(f"Trying to upsert -{point_quantity}- points")
+                    logger.info(f"Trying to upsert -{point_quantity}- points")
                     self.client.upsert(collection_name=self.collection, points=points)
                     logger.info(f"Added -{point_quantity}-")
                     return
@@ -92,10 +92,11 @@ class VectorStorage:
                 raise e
 
 
-    def search(self, used_documents: List[str], query, query_dense, query_sparse: Optional[SparseVectorData] = None, top_k: int = TOP_K, debug: bool = False) -> List[SearchResult]:
+    def search(self, used_documents: List[DocumentNode], query, query_dense, query_sparse: Optional[SparseVectorData] = None, top_k: int = TOP_K, debug: bool = False) -> List[SearchResult]:
         logger.info("Starting search")
         try:
             if not used_documents:
+                logger.info("No documents used, model trying to give an answer on its own knowledge")
                 return []
 
             query_filter = Filter(
@@ -107,7 +108,7 @@ class VectorStorage:
                 ]
             )
             if debug:
-                logger.debug(f"Applied filter for docs: {query_filter}")
+                logger.info(f"Applied filter for docs: {query_filter}")
 
 
             if USE_HYBRID:
@@ -165,7 +166,8 @@ class VectorStorage:
                 logger.info("Reranker working ...")
                 if self.reranker:
                     search_result = self.reranker.rerank(query, search_result)
-                    logger.info("Success")
+                    logger.info("Reranked successfuly")
+                    logger.debug(f"Reranker result: {search_result}")
 
             logger.debug(f"search_result[{search_result}]")
             return search_result

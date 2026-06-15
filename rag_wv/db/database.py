@@ -1,11 +1,16 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session
-import os
 from dotenv import load_dotenv
+import os, logging
 
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+logger = logging.getLogger(__name__)
 
+logger.info("Getting DataBaseURL")
+DATABASE_URL = os.getenv("DATABASE_URL")
+logger.debug(f"GOT: {DATABASE_URL}")
+
+logger.info("Creating engine")
 engine = create_engine(url=DATABASE_URL)
 
 class Base(DeclarativeBase):

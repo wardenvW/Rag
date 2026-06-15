@@ -2,7 +2,7 @@ import logging
 import re
 import pymupdf4llm
 from typing import Callable
-from ..config import ALLOWED_FILE_EXTENSIONS
+#from ..config import ALLOWED_FILE_EXTENSIONS
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ def clean_pdf_text(text: str) -> str:
 
 
 def pdf_handler(document) -> str:
-    pages = pymupdf4llm.to_text(document, ocr_language = "rus+eng", page_chunks = True)
+    pages = pymupdf4llm.to_text(document, ocr_language = "rus+eng", page_chunks = True, write_images=True, image_path="documents", image_format='png')
     pages_data = [
         {
             "page": page["metadata"]["page_number"], 
@@ -31,7 +31,7 @@ def pdf_handler(document) -> str:
     #TODO: Реализовать также обработку картинок и тд
 
 def doc_handler(document) -> str:
-    pass
+    pass    
 
 def docx_handler(document) -> str:
     pass
@@ -53,3 +53,5 @@ document_handlers: dict[str, Callable] = {
 
 def get_handler(extension: str) -> Callable:
     return document_handlers[extension]
+
+

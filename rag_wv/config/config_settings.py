@@ -22,16 +22,16 @@ QDRANT_URL: str = os.getenv("QDRANT_URL")
 DOCUMENTS_PATH: str = BASE_DIR / "documents"
 COLLECTION_NAME: str = "docs"
 VECTOR_DIM: int = 1024
-TOP_K: int = 50
+TOP_K: int = 25
 
 # --- Параметры Chunker'а ---
-DEFAULT_CHUNK_SIZE: int = 2500
-DEFAULT_CHUNK_OVERLAP: int = 250
+DEFAULT_CHUNK_SIZE: int = 1000
+DEFAULT_CHUNK_OVERLAP: int = 100
 
 # --- Reranker и всё с ним связанное ---
 RERANKER_NAME: str = "qilowoq/bge-reranker-v2-m3-en-ru"
 USE_RERANKER: bool = True
-TOP_N: int = 25
+TOP_N: int = 10
 
 # --- LLM API KEY ---
 API_KEY: str = os.getenv("API_KEY")
@@ -55,10 +55,9 @@ def init_logging() -> None:
             logging.FileHandler(filename=BASE_DIR / "app.log", encoding="utf-8")
         ],
     )
-    logging.getLogger("httpx").setLevel(logging.ERROR)
-    logging.getLogger("httpcore.http11").setLevel(logging.ERROR)
-    logging.getLogger("httpcore.connection").setLevel(logging.ERROR)
-    logging.getLogger("sentence_transformers.base.model").setLevel(logging.ERROR)
-    logging.getLogger("FlagEmbedding.finetune.embedder.encoder_only.m3.runner").setLevel(logging.ERROR)
-    logging.getLogger("huggingface_hub.utils._http").setLevel(logging.ERROR)
-    logging.getLogger("").setLevel(logging.ERROR)
+    logging.getLogger("httpx").setLevel(logging.FATAL)
+    logging.getLogger("httpcore.http11").setLevel(logging.FATAL)
+    logging.getLogger("httpcore.connection").setLevel(logging.FATAL)
+    logging.getLogger("sentence_transformers.base.model").setLevel(logging.FATAL)
+    logging.getLogger("FlagEmbedding.finetune.embedder.encoder_only.m3.runner").setLevel(logging.FATAL)
+    logging.getLogger("huggingface_hub.utils._http").setLevel(logging.FATAL)
