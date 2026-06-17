@@ -1,27 +1,27 @@
-# Plans:
-...
+# RAGwv — Advanced Hybrid RAG System
 
-## Future Goals:
- Different documents hadlers ✘ (docling universal) (virtual + python generation for csv)
- \nLocal LLM
- frontend(react)
- Conversation memorizing (also button turn ON/OFF) ✘ (краткий пересказ давних и полное содержание recently диалогов) + button(on/off)
+## 🛠 Tech stack
 
-# MUST-to-do
-# sudo apt install tesseract-ocr tesseract-ocr-rus tesseract-ocr-eng
+* **Backend:** FastAPI, Python 3.12
+* **Vector DB:** Qdrant (Hybrid Search: Dense + Sparse)
+* **Embeddings & LLM:** Local Deployments (BGE-M3, Русский/English support)
+* **Frontend:** React, Tailwind CSS, Lucide Icons, React Router
 
+---
 
-# Подумать над этим в составлении промпта
+## 🗺 Roadmap (potential ideas)
+[] **Conversation memory (+button on/off)**
+[] **Different documents hadlers ✘ (docling universal) (virtual + python generation for csv)**
+[] **Local LLM integration into MAIN PIPELINE**
+[] **Frontend features**
+[] **New experimental prompt builder:**
+```xml
 <context>
     <document index="1" type="legal">
         Текст договора...
     </document>
-    
     <document index="2" type="tech">
         Техническая спецификация...
     </document>
 </context>
-
-
-
-# P.S. система даёт ответ на основе своих данных, если пользователь не выбрал файлы, которые будут использоваться при ответе.
+```
