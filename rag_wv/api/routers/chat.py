@@ -11,10 +11,10 @@ logger = logging.getLogger(__name__)
 chat_router = APIRouter()
 
 @chat_router.post("/ask")
-def stream_response(query: QueryRequest, request: Request, session: Session = Depends(get_session)) -> Iterable[str]:
+def stream_response(query: QueryRequest, request: Request, session: Session = Depends(get_session)) -> StreamingResponse:
     used_documents = get_active_documents(session)
     logger.debug(f"Used documents: {used_documents}")
-    headers = {'X-Content-Type-Options:': 'nosniff'}
+    headers = {'X-Content-Type-Options': 'nosniff'}
     return StreamingResponse(
         content=(chunk for chunk in request.app.state.pipeline.stream_answer(query.query, used_documents) if chunk is not None),  #Иногда поток передаёт None чанки
         headers=headers,

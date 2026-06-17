@@ -6,7 +6,6 @@ from google.genai import Client, types
 from pathlib import Path
 from typing import List, Iterator
 from ..models import Chunk, DocumentType
-from ..utils import data_normalize
 from ..prompt import build_prompt, build_promptv2
 
 logger = logging.getLogger(__name__)
@@ -24,17 +23,14 @@ class Pipeline:
     def process(self, data: List[Path], d_type) -> None:
         for doc in data:
             try:
-                logger.info("Data normalize proccess")
-                normalized_data = data_normalize(doc, d_type)
-                logger.info("Success")
                 
                 logger.info("Setting chunking params")
                 self.chunker.change_chunk_params(d_type)
                 logger.info("Updated")
 
                 logger.info("Chunking...")
-                chunk_data = self.chunker.chunk(normalized_data)
-                logger.info("Document chunked into %d pieces", len(chunk_data))
+                chunk_data = self.chunker.chunk(doc, d_type)
+                logger.info(f"[{doc}] chunked into {len(chunk_data)} pieces")
                 
                 chunk_texts = [chunk_text for chunk_text, _ in chunk_data]
                 logger.info("Starting embedding")
@@ -51,7 +47,7 @@ class Pipeline:
 
                 self.vector_db.upsert(ready_chunks)
             except Exception as e:
-                logger.error("Failed to process document %s: %s", doc.name, str(e), exc_info=True)
+                logger.error("Failed to process document %s: %s", doc.name, str(e))
                 continue
             
     def stream_answer(self, query: str, used_documents: List[str]) -> Iterator:

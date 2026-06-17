@@ -6,7 +6,6 @@ from sqlalchemy import String, DateTime, Boolean
 from datetime import datetime
 from enum import Enum
 from rag_wv.db import Base
-from uuid import UUID
 import json
 
 @dataclass
@@ -90,7 +89,6 @@ class DocumentType(str, Enum):
     LEGAL = "legal"
     TECH = "tech"
     FINANCE = "finance"
-    CRIMINALIST = "criminalist"
     OTHER = "other"
 
 class DocumentStatus(str, Enum):
