@@ -25,3 +25,7 @@
     </document>
 </context>
 ```
+---
+
+## 📁Must-to-do
+**sudo apt install tesseract-ocr tesseract-ocr-rus tesseract-ocr-**
