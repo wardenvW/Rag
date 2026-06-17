@@ -28,4 +28,4 @@
 ---
 
 ## 📁Must-to-do
-**sudo apt install tesseract-ocr tesseract-ocr-rus tesseract-ocr-**
+**sudo apt install tesseract-ocr tesseract-ocr-rus tesseract-ocr-eng**
