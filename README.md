@@ -1,5 +1,5 @@
 # Plans:
- 1. Admin router(just logging on early stage) ✘ (logging stream + yield file.open file.seek)
+...
 
 ## Future Goals:
  Different documents hadlers ✘ (docling universal) (virtual + python generation for csv)
