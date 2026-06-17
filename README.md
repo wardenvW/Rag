@@ -3,7 +3,7 @@
 
 ## Future Goals:
  Different documents hadlers ✘ (docling universal) (virtual + python generation for csv)
- Local LLM
+ \nLocal LLM
  frontend(react)
  Conversation memorizing (also button turn ON/OFF) ✘ (краткий пересказ давних и полное содержание recently диалогов) + button(on/off)
 
