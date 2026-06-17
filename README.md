@@ -10,11 +10,11 @@
 ---
 
 ## 🗺 Roadmap (potential ideas)
-* [ ] **Conversation memory (+button on/off)**
-* [ ] **Different documents hadlers ✘ (docling universal) (virtual + python generation for csv)**
-* [ ] **Local LLM integration into MAIN PIPELINE**
-* [ ] **Frontend features**
-* [ ] **New experimental prompt builder:**
+* [ X ] **Conversation memory (+button on/off)**
+* [ X ] **Different documents hadlers ✘ (docling universal) (virtual + python generation for csv)**
+* [ X ] **Local LLM integration into MAIN PIPELINE**
+* [ X ] **Frontend features**
+* [ ✘ ] **New experimental prompt builder:**
 ```xml
 <context>
     <document index="1" type="legal">
