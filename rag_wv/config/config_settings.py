@@ -41,6 +41,7 @@ ALLOWED_FILE_EXTENSIONS: List[str] = [".pdf", ".doc", ".docx", ...]
 
 # --- Логгирование ---
 LOG_LEVEL = logging.DEBUG
+LOG_FILE: str = "app.log"
 def init_logging() -> None:
     LOG_FORMAT = '%(asctime)s | %(levelname)-7s | %(name)s - %(message)s'
     DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
@@ -52,7 +53,7 @@ def init_logging() -> None:
         datefmt=DATE_FORMAT,
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler(filename=BASE_DIR / "app.log", encoding="utf-8")
+            logging.FileHandler(filename=BASE_DIR / LOG_FILE, encoding="utf-8")
         ],
     )
     logging.getLogger("httpx").setLevel(logging.FATAL)

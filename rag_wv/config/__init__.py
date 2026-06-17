@@ -17,5 +17,5 @@ from .config_settings import (
     TOP_N,
     DOCUMENTS_PATH,
     init_logging,
-
+    LOG_FILE
 )
