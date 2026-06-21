@@ -29,3 +29,11 @@
 
 ## 📁Must-to-do
 **sudo apt install tesseract-ocr tesseract-ocr-rus tesseract-ocr-eng**
+
+
+## .env
+**API_KEY =**
+**EMB_MODEL_NAME =**
+**QDRANT_PATH =**
+**QDRANT_URL =**
+**DATABASE_URL=**
