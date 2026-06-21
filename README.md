@@ -32,8 +32,8 @@
 
 
 ## .env
-**API_KEY =**
-**EMB_MODEL_NAME =**
-**QDRANT_PATH =**
-**QDRANT_URL =**
-**DATABASE_URL=**
+* **API_KEY =**
+* **EMB_MODEL_NAME =**
+* **QDRANT_PATH =**
+* **QDRANT_URL =**
+* **DATABASE_URL=**
